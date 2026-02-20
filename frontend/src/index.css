@@ -1,0 +1,747 @@
+/* ============================================
+   💀 FUNERAL FOR STUPID DECISIONS
+   Gothic Design System
+   ============================================ */
+
+/* --- CSS Reset & Variables --- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Palette: Cute-Gothic */
+  --obsidian: #0a0a0f;
+  --void: #0d0d15;
+  --crypt: #12121f;
+  --tombstone: #1a1a2e;
+  --ghost: #2a2a3e;
+  --ash: #8888aa;
+  --bone: #c8c8d8;
+  --spirit: #e8e8f0;
+
+  /* Accent Colors */
+  --candle: #ffaa00;
+  --candle-glow: #ffcc44;
+  --blood: #cc2244;
+  --purple-mist: #7733bb;
+  --purple-deep: #4a1a7a;
+  --rose-dead: #994466;
+
+  /* Typography */
+  --font-gothic: 'UnifrakturMaguntia', cursive;
+  --font-serif: 'Crimson Text', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+
+  /* Misc */
+  --radius: 8px;
+  --radius-lg: 16px;
+  --transition: 0.3s ease;
+  --shadow-glow: 0 0 20px rgba(255, 170, 0, 0.15);
+  --shadow-tomb: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--obsidian);
+  color: var(--bone);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Background Atmosphere --- */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(75, 26, 122, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(153, 68, 102, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 60%, rgba(255, 170, 0, 0.05) 0%, transparent 40%);
+}
+
+.atmosphere::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  right: -10%;
+  height: 50%;
+  background: linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 100%);
+  filter: blur(20px);
+  animation: fogDrift 12s ease-in-out infinite alternate;
+}
+
+@keyframes fogDrift {
+  0% {
+    transform: translateX(-3%) translateY(0);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translateX(3%) translateY(-5%);
+    opacity: 1;
+  }
+}
+
+/* Floating particles (candle sparks) */
+.particle {
+  position: fixed;
+  width: 3px;
+  height: 3px;
+  background: var(--candle);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  animation: sparkFloat 6s ease-in-out infinite;
+}
+
+@keyframes sparkFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+
+  10% {
+    opacity: 0.8;
+  }
+
+  90% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-20vh) scale(1.5);
+  }
+}
+
+/* --- Layout --- */
+.app-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: var(--space-lg);
+}
+
+/* --- Header --- */
+.header {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg) var(--space-xl);
+  max-width: 700px;
+}
+
+.header-skull {
+  font-size: 3.5rem;
+  margin-bottom: var(--space-sm);
+  filter: drop-shadow(0 0 12px rgba(255, 170, 0, 0.4));
+  animation: skullGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes skullGlow {
+  0% {
+    filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.3));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 20px rgba(255, 170, 0, 0.6));
+  }
+}
+
+.header h1 {
+  font-family: var(--font-gothic);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--spirit);
+  letter-spacing: 2px;
+  line-height: 1.2;
+  margin-bottom: var(--space-md);
+  text-shadow: 0 0 30px rgba(119, 51, 187, 0.4);
+}
+
+.header p {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  color: var(--ash);
+  font-style: italic;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* --- The Confessional (Input) --- */
+.confessional {
+  width: 100%;
+  max-width: 600px;
+  margin: var(--space-lg) auto var(--space-2xl);
+}
+
+.confessional-box {
+  background: linear-gradient(145deg, var(--crypt), var(--tombstone));
+  border: 1px solid var(--ghost);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-tomb);
+  position: relative;
+  overflow: hidden;
+}
+
+.confessional-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--candle), transparent);
+  opacity: 0.6;
+}
+
+.confessional-label {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--ash);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.confessional-label span {
+  font-size: 1.2rem;
+}
+
+.confessional-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: var(--void);
+  border: 1px solid var(--ghost);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--spirit);
+  resize: vertical;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  line-height: 1.6;
+}
+
+.confessional-textarea::placeholder {
+  color: var(--ash);
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.confessional-textarea:focus {
+  outline: none;
+  border-color: var(--purple-mist);
+  box-shadow: 0 0 0 3px rgba(119, 51, 187, 0.15), 0 0 20px rgba(119, 51, 187, 0.1);
+}
+
+/* --- Bury Button --- */
+.bury-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  margin-top: var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
+  background: linear-gradient(135deg, var(--purple-deep), var(--blood));
+  border: 1px solid rgba(204, 34, 68, 0.3);
+  border-radius: var(--radius);
+  color: var(--spirit);
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 1px;
+}
+
+.bury-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.bury-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(204, 34, 68, 0.3), 0 0 40px rgba(119, 51, 187, 0.2);
+  border-color: rgba(204, 34, 68, 0.5);
+}
+
+.bury-btn:hover::before {
+  opacity: 1;
+}
+
+.bury-btn:active {
+  transform: translateY(0);
+}
+
+.bury-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.bury-btn .btn-icon {
+  font-size: 1.3rem;
+}
+
+/* --- Loading State --- */
+.loading-ceremony {
+  text-align: center;
+  padding: var(--space-2xl);
+}
+
+.coffin-loader {
+  font-size: 3rem;
+  animation: coffinBounce 1.2s ease-in-out infinite;
+}
+
+@keyframes coffinBounce {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-15px) rotate(-3deg);
+  }
+
+  75% {
+    transform: translateY(-15px) rotate(3deg);
+  }
+}
+
+.loading-text {
+  font-family: var(--font-serif);
+  color: var(--ash);
+  font-style: italic;
+  margin-top: var(--space-md);
+  font-size: 1.05rem;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* --- Gravestone --- */
+.graveyard {
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto;
+  padding: var(--space-lg) 0 var(--space-2xl);
+}
+
+.gravestone {
+  position: relative;
+  background: linear-gradient(180deg, #2a2a3a 0%, #1e1e2e 40%, #161625 100%);
+  border-radius: 50% 50% 4px 4px / 20% 20% 0 0;
+  padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+  text-align: center;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gravestone::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ash);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.gravestone::after {
+  content: '✝';
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  color: var(--ash);
+  opacity: 0.4;
+}
+
+.grave-rip {
+  font-family: var(--font-gothic);
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  color: var(--spirit);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  text-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
+}
+
+.grave-mistake {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--candle);
+  font-style: italic;
+  padding: var(--space-md) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin: var(--space-md) 0;
+  line-height: 1.5;
+}
+
+.grave-dates {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--ash);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: var(--space-md) 0;
+}
+
+.grave-epitaph {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--bone);
+  font-style: italic;
+  line-height: 1.7;
+  margin: var(--space-lg) 0 var(--space-md);
+  padding: 0 var(--space-sm);
+}
+
+.grave-epitaph::before {
+  content: '"';
+  font-size: 2rem;
+  color: var(--purple-mist);
+  opacity: 0.5;
+  line-height: 0;
+  vertical-align: -0.3em;
+  margin-right: 4px;
+}
+
+.grave-epitaph::after {
+  content: '"';
+  font-size: 2rem;
+  color: var(--purple-mist);
+  opacity: 0.5;
+  line-height: 0;
+  vertical-align: -0.3em;
+  margin-left: 4px;
+}
+
+/* --- Panegyric (Eulogy) --- */
+.panegyric {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg);
+  background: linear-gradient(145deg, rgba(18, 18, 31, 0.8), rgba(26, 26, 46, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.panegyric-title {
+  font-family: var(--font-gothic);
+  font-size: 1.3rem;
+  color: var(--candle);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.panegyric-text {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--bone);
+  line-height: 1.8;
+  font-style: italic;
+}
+
+/* --- Actions (Bury Another / Share) --- */
+.grave-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid var(--ghost);
+  background: var(--crypt);
+  color: var(--bone);
+}
+
+.action-btn:hover {
+  background: var(--tombstone);
+  border-color: var(--purple-mist);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mist));
+  border-color: var(--purple-mist);
+  color: var(--spirit);
+}
+
+.action-btn.primary:hover {
+  box-shadow: 0 4px 20px rgba(119, 51, 187, 0.3);
+}
+
+/* --- Cemetery (Grave History) --- */
+.cemetery-section {
+  width: 100%;
+  max-width: 700px;
+  margin: var(--space-2xl) auto;
+  padding-top: var(--space-xl);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cemetery-title {
+  font-family: var(--font-gothic);
+  font-size: 1.8rem;
+  color: var(--spirit);
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.cemetery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-lg);
+}
+
+.mini-grave {
+  background: var(--crypt);
+  border: 1px solid var(--ghost);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mini-grave:hover {
+  background: var(--tombstone);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.mini-grave-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-sm);
+}
+
+.mini-grave-name {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--bone);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mini-grave-date {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--ash);
+  margin-top: var(--space-xs);
+  letter-spacing: 1px;
+}
+
+/* --- Error State --- */
+.error-box {
+  background: rgba(204, 34, 68, 0.1);
+  border: 1px solid rgba(204, 34, 68, 0.3);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  color: var(--blood);
+  font-family: var(--font-serif);
+  text-align: center;
+  margin: var(--space-md) 0;
+}
+
+/* --- Textarea Footer --- */
+.textarea-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--ash);
+  opacity: 0.7;
+}
+
+.char-count {
+  letter-spacing: 1px;
+}
+
+.lang-hint {
+  font-size: 0.8rem;
+}
+
+/* --- Cause of Death --- */
+.grave-cause {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--rose-dead);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+/* --- Cemetery Subtitle --- */
+.cemetery-subtitle {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--ash);
+  text-align: center;
+  font-style: italic;
+  margin-top: calc(-1 * var(--space-md));
+  margin-bottom: var(--space-xl);
+  opacity: 0.7;
+}
+
+/* --- Mini Grave with Delete --- */
+.mini-grave {
+  position: relative;
+}
+
+.mini-grave-content {
+  cursor: pointer;
+}
+
+.mini-grave-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(204, 34, 68, 0.3);
+  background: rgba(204, 34, 68, 0.15);
+  color: var(--blood);
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all var(--transition);
+}
+
+.mini-grave:hover .mini-grave-delete {
+  opacity: 1;
+}
+
+.mini-grave-delete:hover {
+  background: rgba(204, 34, 68, 0.4);
+  border-color: var(--blood);
+  transform: scale(1.1);
+}
+
+/* --- App Footer --- */
+.app-footer {
+  margin-top: auto;
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--ash);
+  opacity: 0.4;
+  letter-spacing: 1px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  .app-container {
+    padding: var(--space-md);
+  }
+
+  .header {
+    padding: var(--space-xl) var(--space-sm) var(--space-lg);
+  }
+
+  .confessional-box {
+    padding: var(--space-lg);
+  }
+
+  .gravestone {
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
+  }
+
+  .grave-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    justify-content: center;
+  }
+}
