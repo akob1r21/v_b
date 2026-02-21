@@ -14,6 +14,23 @@ app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 
 // ====================================================
+// 💀 OpenAI Setup — graceful fallback if no key
+// ====================================================
+
+let openaiClient = null
+try {
+    if (process.env.OPENAI_API_KEY) {
+        const { default: OpenAI } = await import('openai')
+        openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+        console.log('✅ OpenAI connected — AI-powered burials enabled')
+    } else {
+        console.log('⚠️  No OPENAI_API_KEY found — using static templates (still dramatic!)')
+    }
+} catch (e) {
+    console.warn('⚠️  OpenAI import failed, using static fallback:', e.message)
+}
+
+// ====================================================
 // 💀 Data Storage — JSON file for persistence
 // ====================================================
 
@@ -39,26 +56,26 @@ function saveGraves(graves) {
 }
 
 function appendLog(entry) {
-    const line = `[${new Date().toISOString()}] session=${entry.sessionId} | mistake="${entry.mistake}" | lang=${entry.lang}\n`
+    const line = `[${new Date().toISOString()}] session=${entry.sessionId} | mistake="${entry.mistake}" | lang=${entry.lang} | deleted=${entry.is_deleted}\n`
     fs.appendFileSync(LOG_FILE, line, 'utf-8')
 }
 
 let allGraves = loadGraves()
 
 // ====================================================
-// 💀 Language Detection — simple heuristic
+// 💀 Language Detection
 // ====================================================
 
 function detectLanguage(text) {
     const cyrillicCount = (text.match(/[\u0400-\u04FF]/g) || []).length
     const latinCount = (text.match(/[a-zA-Z]/g) || []).length
     const totalLetters = cyrillicCount + latinCount
-    if (totalLetters === 0) return 'ru' // default
+    if (totalLetters === 0) return 'ru'
     return cyrillicCount / totalLetters > 0.3 ? 'ru' : 'en'
 }
 
 // ====================================================
-// 💀 The Crypt — Epitaph & Eulogy Generation (RU + EN)
+// 💀 Static Fallback Templates (RU + EN)
 // ====================================================
 
 const EPITAPHS = {
@@ -69,26 +86,26 @@ const EPITAPHS = {
         (m) => `Покойся с миром, «${m}». Ты научило нас, как НЕ надо делать.`,
         (m) => `Любимое «${m}» — рождённое в самоуверенности, умершее от здравого смысла.`,
         (m) => `«${m}» — прекрасная катастрофа. Как фейерверк внутри квартиры.`,
-        (m) => `Здесь лежит «${m}». Продержалось дольше, чем ожидалось, но недостаточно, чтобы иметь значение.`,
-        (m) => `Памяти «${m}» — решения, доказавшего, что гравитация всегда побеждает.`,
-        (m) => `«${m}» — идея, объединившая всех... в чувстве вторичного стыда.`,
+        (m) => `Здесь лежит «${m}». Продержалось дольше, чем ожидалось.`,
+        (m) => `Памяти «${m}» — доказавшего, что гравитация всегда побеждает.`,
+        (m) => `«${m}» — идея, объединившая всех в чувстве вторичного стыда.`,
         (m) => `Прощай, «${m}». Ты был спидбампом на шоссе мудрости.`,
-        (m) => `Здесь покоится «${m}» — доказательство, что уверенность без компетентности — просто вайб.`,
+        (m) => `Здесь покоится «${m}» — уверенность без компетентности — просто вайб.`,
         (m) => `«${m}» — легендарное решение. Не в хорошем смысле. Но легендарное.`,
     ],
     en: [
         (m) => `Here lies "${m}" — a decision so bold, even Darwin applauded.`,
-        (m) => `In loving memory of "${m}". It seemed like a brilliant idea at 3am.`,
-        (m) => `"${m}" — Gone but never forgotten. Mostly because we screenshot everything now.`,
+        (m) => `In loving memory of "${m}". It seemed brilliant at 3am.`,
+        (m) => `"${m}" — Gone but never forgotten. We screenshot everything now.`,
         (m) => `Rest in peace, "${m}". You taught us all what NOT to do.`,
         (m) => `Beloved "${m}" — born in overconfidence, died in hindsight.`,
         (m) => `"${m}" — A beautiful disaster. Like a firework inside a house.`,
-        (m) => `Here lies "${m}". It lasted longer than expected, but not long enough to matter.`,
-        (m) => `In memory of "${m}" — a decision that proved gravity always wins.`,
-        (m) => `"${m}" — the idea that united everyone... in secondhand embarrassment.`,
-        (m) => `Farewell, "${m}". You were the speedbump on the highway of wisdom.`,
-        (m) => `Here rests "${m}" — proof that confidence without competence is just vibes.`,
-        (m) => `"${m}" — it was legendary. Not in a good way. But legendary.`,
+        (m) => `Here lies "${m}". Lasted longer than expected, not long enough to matter.`,
+        (m) => `In memory of "${m}" — proof that gravity always wins.`,
+        (m) => `"${m}" — the idea that united everyone in secondhand embarrassment.`,
+        (m) => `Farewell, "${m}". The speedbump on the highway of wisdom.`,
+        (m) => `Here rests "${m}" — confidence without competence is just vibes.`,
+        (m) => `"${m}" — legendary. Not in a good way. But legendary.`,
     ],
 }
 
@@ -105,7 +122,7 @@ const EULOGIES = {
         (m) => `Dearly departed, we gather here today to bid farewell to "${m}". It arrived in our lives like a freight train of bad judgment, and it left the same way — loudly, with smoke, and leaving everyone confused. We may never understand why it happened, but we will always remember the lessons it beat into us. May it rest in eternal cringe.`,
         (m) => `Friends, we are here to honor the memory of "${m}". Some decisions make us stronger. This one made us question everything. Born from a moment of reckless inspiration, it burned brightly — like a dumpster fire. It taught us humility, regret, and the importance of sleeping on big ideas. You will be missed. Sort of.`,
         (m) => `We come together to mourn "${m}" — a decision that walked so our wisdom could run. It appeared during a moment of weakness and stayed just long enough to cause maximum embarrassment. Though it is gone, its spirit lives on in every moment we pause and think "wait, is this actually a good idea?" Thank you for your service.`,
-        (m) => `Let us bow our heads for "${m}". In the grand cemetery of stupid decisions, this one earned a premium plot. It was ambitious, it was fearless, it was absolutely unhinged. And yet, without it, we would never have known the true meaning of "learning the hard way." Goodbye, old friend. The world is slightly smarter without you.`,
+        (m) => `Let us bow our heads for "${m}". In the grand cemetery of stupid decisions, this one earned a premium plot. It was ambitious, it was fearless, it was absolutely unhinged. And yet, without it, we would never have known the true meaning of "learning the hard way." Goodbye, old friend.`,
         (m) => `Today we lay to rest "${m}" — a decision as confident as it was misguided. It entered our lives with swagger and left with a restraining order from common sense. Like all great tragedies, it was completely preventable. Yet here we are, standing at its grave, somehow richer in experience and poorer in dignity.`,
         (m) => `We commend to the earth "${m}", a decision that defied logic, reason, and basic math. It was the kind of choice that makes angels weep and comedians rejoice. Though short-lived, its impact was felt across multiple group chats. As we lower it into the ground, we promise to do better. Probably. Maybe. We'll try.`,
     ],
@@ -143,6 +160,57 @@ const CAUSES_OF_DEATH = {
 }
 
 // ====================================================
+// 💀 AI Generation — falls back to static if unavailable
+// ====================================================
+
+async function generateAIContent(mistake, lang) {
+    if (!openaiClient) return null
+
+    const isRu = lang === 'ru'
+    const systemPrompt = isRu
+        ? `Ты — саркастичный, драматичный и немного готический ведущий похоронной церемонии для глупых решений. Ты пишешь на русском языке. Твой стиль: умный, немного саркастичный, драматичный, смешной но интеллигентный.`
+        : `You are a sarcastic, dramatic, slightly gothic funeral officiant for stupid decisions. You write sharp, intelligent, darkly funny eulogies. Style: dramatic, sarcastic, funny but sophisticated.`
+
+    const userPrompt = isRu
+        ? `Напиши похоронную речь для следующего решения/ошибки: "${mistake}"
+
+Верни JSON строго в таком формате:
+{
+  "epitaph": "одна короткая саркастичная строка (максимум 120 символов) для надгробия",
+  "eulogy": "полная траурная речь в 4-6 предложений, драматичная, саркастичная и умная"
+}`
+        : `Write a funeral speech for this mistake/decision: "${mistake}"
+
+Return JSON strictly in this format:
+{
+  "epitaph": "one short sarcastic line (max 120 chars) for the tombstone",
+  "eulogy": "full funeral speech in 4-6 sentences, dramatic, sarcastic and intelligent"
+}`
+
+    try {
+        const completion = await openaiClient.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.9,
+            max_tokens: 600,
+            response_format: { type: 'json_object' },
+        })
+
+        const parsed = JSON.parse(completion.choices[0].message.content)
+        if (parsed.epitaph && parsed.eulogy) {
+            return { epitaph: parsed.epitaph, eulogy: parsed.eulogy }
+        }
+        return null
+    } catch (e) {
+        console.warn('AI generation failed, falling back to static:', e.message)
+        return null
+    }
+}
+
+// ====================================================
 // 💀 Helpers
 // ====================================================
 
@@ -165,7 +233,7 @@ function truncateMistake(mistake, maxLen = 80) {
 }
 
 // ====================================================
-// 💀 Session Middleware — cookie-based UUID
+// 💀 Session Middleware
 // ====================================================
 
 function sessionMiddleware(req, res, next) {
@@ -185,7 +253,7 @@ app.use(sessionMiddleware)
 // ====================================================
 
 // POST /api/bury — Submit a mistake for burial
-app.post('/api/bury', (req, res) => {
+app.post('/api/bury', async (req, res) => {
     const { mistake } = req.body
     const sessionId = req.sessionId
 
@@ -202,8 +270,17 @@ app.post('/api/bury', (req, res) => {
     const diedRu = `${now.getDate()} ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'][now.getMonth()]} ${now.getFullYear()}`
     const diedEn = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
-    const epitaphFn = randomFrom(EPITAPHS[lang])
-    const eulogyFn = randomFrom(EULOGIES[lang])
+    // Try AI generation first, fall back to static templates
+    const aiContent = await generateAIContent(cleanMistake, lang)
+
+    const epitaph = aiContent
+        ? aiContent.epitaph
+        : randomFrom(EPITAPHS[lang])(shortMistake)
+
+    const eulogy = aiContent
+        ? aiContent.eulogy
+        : randomFrom(EULOGIES[lang])(shortMistake)
+
     const cause = randomFrom(CAUSES_OF_DEATH[lang])
 
     const graveData = {
@@ -212,69 +289,83 @@ app.post('/api/bury', (req, res) => {
         mistake: cleanMistake,
         born: lang === 'ru' ? bornDates.ru : bornDates.en,
         died: lang === 'ru' ? diedRu : diedEn,
-        epitaph: epitaphFn(shortMistake),
-        eulogy: eulogyFn(shortMistake),
+        epitaph,
+        eulogy,
         causeOfDeath: cause,
         lang,
         buriedAt: now.toISOString(),
+        is_deleted: false,
+        ai_generated: !!aiContent,
     }
 
-    // Save to memory + disk
     allGraves.push(graveData)
     saveGraves(allGraves)
     appendLog(graveData)
 
-    // Simulate a 1.5-3s "burial ceremony" delay
+    // Ceremony delay
     const delay = 1500 + Math.random() * 1500
     setTimeout(() => {
         res.json(graveData)
     }, delay)
 })
 
-// GET /api/graves — Get graves for current session only
+// GET /api/graves — Get graves for current session (exclude soft-deleted)
 app.get('/api/graves', (req, res) => {
     const sessionId = req.sessionId
     const userGraves = allGraves
-        .filter(g => g.sessionId === sessionId)
+        .filter(g => g.sessionId === sessionId && !g.is_deleted)
         .sort((a, b) => new Date(b.buriedAt) - new Date(a.buriedAt))
     res.json(userGraves)
 })
 
-// DELETE /api/graves/:id — Delete a grave (only if owned by session)
+// DELETE /api/graves/:id — Soft delete (sets is_deleted = true)
 app.delete('/api/graves/:id', (req, res) => {
     const { id } = req.params
     const sessionId = req.sessionId
-    const index = allGraves.findIndex(g => g.id === id && g.sessionId === sessionId)
+    const grave = allGraves.find(g => g.id === id && g.sessionId === sessionId)
 
-    if (index === -1) {
+    if (!grave) {
         return res.status(404).json({ error: 'Могила не найдена.' })
     }
 
-    allGraves.splice(index, 1)
+    // Soft delete — mark as deleted, do NOT remove from array
+    grave.is_deleted = true
+    grave.deleted_at = new Date().toISOString()
     saveGraves(allGraves)
-    res.json({ success: true })
+
+    res.json({ success: true, message: 'Могила упокоена навечно (soft delete).' })
 })
 
-// GET /api/admin/graves — Admin view of ALL graves (requires key)
+// GET /api/admin/graves — Admin view of ALL graves including soft-deleted
 app.get('/api/admin/graves', (req, res) => {
     const key = req.query.key || req.headers['x-admin-key']
     if (key !== ADMIN_KEY) {
         return res.status(403).json({ error: 'Доступ запрещён.' })
     }
 
+    const total = allGraves.length
+    const deleted = allGraves.filter(g => g.is_deleted).length
+    const active = total - deleted
+
     const stats = {
-        total: allGraves.length,
+        total,
+        active,
+        soft_deleted: deleted,
         sessions: [...new Set(allGraves.map(g => g.sessionId))].length,
+        ai_generated: allGraves.filter(g => g.ai_generated).length,
         languages: {
             ru: allGraves.filter(g => g.lang === 'ru').length,
             en: allGraves.filter(g => g.lang === 'en').length,
         },
     }
 
-    res.json({ stats, graves: allGraves.sort((a, b) => new Date(b.buriedAt) - new Date(a.buriedAt)) })
+    res.json({
+        stats,
+        graves: allGraves.sort((a, b) => new Date(b.buriedAt) - new Date(a.buriedAt))
+    })
 })
 
-// GET /api/admin/logs — Read raw log file
+// GET /api/admin/logs — Raw log file
 app.get('/api/admin/logs', (req, res) => {
     const key = req.query.key || req.headers['x-admin-key']
     if (key !== ADMIN_KEY) {
@@ -294,6 +385,9 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'Склеп открыт. The crypt is open.',
         totalBurials: allGraves.length,
+        activeBurials: allGraves.filter(g => !g.is_deleted).length,
+        softDeleted: allGraves.filter(g => g.is_deleted).length,
+        aiEnabled: !!openaiClient,
         timestamp: new Date().toISOString(),
     })
 })
@@ -302,9 +396,10 @@ app.listen(PORT, () => {
     console.log(`\n💀 Склеп открыт на порту ${PORT}`)
     console.log(`   POST   /api/bury          — Похоронить ошибку`)
     console.log(`   GET    /api/graves         — Мои могилы`)
-    console.log(`   DELETE /api/graves/:id     — Удалить могилу`)
-    console.log(`   GET    /api/admin/graves   — [ADMIN] Все могилы`)
+    console.log(`   DELETE /api/graves/:id     — Мягко удалить могилу`)
+    console.log(`   GET    /api/admin/graves   — [ADMIN] Все могилы (включая удалённые)`)
     console.log(`   GET    /api/admin/logs     — [ADMIN] Лог файл`)
     console.log(`   GET    /api/health         — Статус`)
-    console.log(`\n   Admin key: ${ADMIN_KEY}\n`)
+    console.log(`\n   Admin key: ${ADMIN_KEY}`)
+    console.log(`   AI: ${openaiClient ? '✅ enabled' : '⚠️  disabled (no OPENAI_API_KEY)'}\n`)
 })
