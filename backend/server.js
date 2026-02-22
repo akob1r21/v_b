@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from 'express'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
@@ -13,21 +14,20 @@ const ADMIN_KEY = process.env.ADMIN_KEY || 'funeral-admin-2026'
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 
-// ====================================================
-// 💀 OpenAI Setup — graceful fallback if no key
-// ====================================================
-
-let openaiClient = null
+let genAI = null
+let geminiModel = null
 try {
-    if (process.env.OPENAI_API_KEY) {
-        const { default: OpenAI } = await import('openai')
-        openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-        console.log('✅ OpenAI connected — AI-powered burials enabled')
+    if (process.env.GEMINI_API_KEY) {
+        const { GoogleGenerativeAI } = await import('@google/generative-ai')
+        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+        const modelName = "gemini-2.5-flash-lite"
+        geminiModel = genAI.getGenerativeModel({ model: modelName })
+        console.log(`✅ Gemini connected (${modelName}) — AI-powered burials enabled`)
     } else {
-        console.log('⚠️  No OPENAI_API_KEY found — using static templates (still dramatic!)')
+        console.log('⚠️  No GEMINI_API_KEY found — using static templates')
     }
 } catch (e) {
-    console.warn('⚠️  OpenAI import failed, using static fallback:', e.message)
+    console.warn('⚠️  Gemini setup failed, using static fallback:', e.message)
 }
 
 // ====================================================
@@ -164,48 +164,44 @@ const CAUSES_OF_DEATH = {
 // ====================================================
 
 async function generateAIContent(mistake, lang) {
-    if (!openaiClient) return null
+    if (!geminiModel) return null
 
     const isRu = lang === 'ru'
-    const systemPrompt = isRu
-        ? `Ты — саркастичный, драматичный и немного готический ведущий похоронной церемонии для глупых решений. Ты пишешь на русском языке. Твой стиль: умный, немного саркастичный, драматичный, смешной но интеллигентный.`
-        : `You are a sarcastic, dramatic, slightly gothic funeral officiant for stupid decisions. You write sharp, intelligent, darkly funny eulogies. Style: dramatic, sarcastic, funny but sophisticated.`
+    const systemInstruction = isRu
+        ? `Ты — саркастичный, драматичный и готический ведущий "Кладбища Глупых Решений". Ты проводишь похоронные церемонии для плоих идей и ошибок. Твой стиль: черный юмор, сарказм, трагизм.`
+        : `You are a sarcastic, dramatic, gothic officiant for the "Funeral for Stupid Decisions". You conduct ceremonies for bad ideas and mistakes. Style: dark humor, sarcasm, tragic.`
 
-    const userPrompt = isRu
-        ? `Напиши похоронную речь для следующего решения/ошибки: "${mistake}"
-
-Верни JSON строго в таком формате:
-{
-  "epitaph": "одна короткая саркастичная строка (максимум 120 символов) для надгробия",
-  "eulogy": "полная траурная речь в 4-6 предложений, драматичная, саркастичная и умная"
-}`
-        : `Write a funeral speech for this mistake/decision: "${mistake}"
-
-Return JSON strictly in this format:
-{
-  "epitaph": "one short sarcastic line (max 120 chars) for the tombstone",
-  "eulogy": "full funeral speech in 4-6 sentences, dramatic, sarcastic and intelligent"
-}`
+    const prompt = isRu
+        ? `${systemInstruction}\n\nПроанализируй эту ошибку: "${mistake}". На основе этого напиши эпитафию, панихиду и причину смерти.\n\nВерни JSON строго в формате:\n{\n  "epitaph": "короткая саркастичная строка для надгробия",\n  "eulogy": "траурная речь (4-6 предложений), драматичная и умная",\n  "cause": "короткая ироничная причина смерти (3-8 слов)"\n}`
+        : `${systemInstruction}\n\nAnalyze this mistake: "${mistake}". Based on this, write an epitaph, a eulogy, and a cause of death.\n\nReturn JSON strictly in format:\n{\n  "epitaph": "short sarcastic line for the tombstone",\n  "eulogy": "funeral speech (4-6 sentences), dramatic and intelligent",\n  "cause": "short ironic cause of death (3-8 words)"\n}`
 
     try {
-        const completion = await openaiClient.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt },
-            ],
-            temperature: 0.9,
-            max_tokens: 600,
-            response_format: { type: 'json_object' },
+        const result = await geminiModel.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+                maxOutputTokens: 600,
+                temperature: 0.9,
+            }
         })
+        const response = await result.response
+        let text = response.text()
 
-        const parsed = JSON.parse(completion.choices[0].message.content)
-        if (parsed.epitaph && parsed.eulogy) {
-            return { epitaph: parsed.epitaph, eulogy: parsed.eulogy }
+        // Robust JSON extraction
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (jsonMatch) text = jsonMatch[0]
+
+        const parsed = JSON.parse(text)
+        if (parsed.epitaph && parsed.eulogy && (parsed.cause || parsed.causeOfDeath)) {
+            return {
+                epitaph: parsed.epitaph,
+                eulogy: parsed.eulogy,
+                causeOfDeath: parsed.cause || parsed.causeOfDeath
+            }
         }
+        console.warn('AI returned partial data:', text)
         return null
     } catch (e) {
-        console.warn('AI generation failed, falling back to static:', e.message)
+        console.error('Gemini generation error details:', e)
         return null
     }
 }
@@ -257,9 +253,11 @@ app.post('/api/bury', async (req, res) => {
     const { mistake } = req.body
     const sessionId = req.sessionId
 
-    if (!mistake || typeof mistake !== 'string' || mistake.trim().length === 0) {
-        return res.status(400).json({ error: 'Нужно исповедать ошибку, чтобы её похоронить.' })
+    if (!mistake || typeof mistake !== 'string' || mistake.trim().length < 2) {
+        return res.status(400).json({ error: 'Нужно исповедать хотя бы короткую ошибку.' })
     }
+
+    console.log(`💀 Burying mistake: "${mistake}" (sess: ${sessionId})`)
 
     const cleanMistake = mistake.trim()
     const lang = detectLanguage(cleanMistake)
@@ -281,7 +279,9 @@ app.post('/api/bury', async (req, res) => {
         ? aiContent.eulogy
         : randomFrom(EULOGIES[lang])(shortMistake)
 
-    const cause = randomFrom(CAUSES_OF_DEATH[lang])
+    const cause = aiContent
+        ? aiContent.causeOfDeath
+        : randomFrom(CAUSES_OF_DEATH[lang])
 
     const graveData = {
         id: randomUUID(),
@@ -387,7 +387,7 @@ app.get('/api/health', (req, res) => {
         totalBurials: allGraves.length,
         activeBurials: allGraves.filter(g => !g.is_deleted).length,
         softDeleted: allGraves.filter(g => g.is_deleted).length,
-        aiEnabled: !!openaiClient,
+        aiEnabled: !!geminiModel,
         timestamp: new Date().toISOString(),
     })
 })
@@ -401,5 +401,5 @@ app.listen(PORT, () => {
     console.log(`   GET    /api/admin/logs     — [ADMIN] Лог файл`)
     console.log(`   GET    /api/health         — Статус`)
     console.log(`\n   Admin key: ${ADMIN_KEY}`)
-    console.log(`   AI: ${openaiClient ? '✅ enabled' : '⚠️  disabled (no OPENAI_API_KEY)'}\n`)
+    console.log(`   AI: ${geminiModel ? '✅ enabled' : '⚠️  disabled (no GEMINI_API_KEY)'}\n`)
 })

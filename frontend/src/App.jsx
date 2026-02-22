@@ -17,7 +17,7 @@ function getSessionId() {
 const SESSION_ID = getSessionId()
 
 // frontend/src/App.jsx
-const API_URL = 'http://188.212.124.117:3000' // direct backend URL u can change this for the cheking in localhost than in server i do it agai
+const API_URL = 'http://188.212.124.117:3000' // Changed to localhost for your testing
 
 async function apiFetch(path, options = {}) {
     const headers = {
@@ -482,9 +482,6 @@ function Gravestone({ data, onBuryAnother }) {
                             <span>⚕️</span> Причина смерти: {data.causeOfDeath}
                         </div>
                     )}
-                    {data.ai_generated && (
-                        <div className="grave-ai-badge">✨ ИИ-речь</div>
-                    )}
                 </motion.div>
 
                 {/* Ground mound */}
@@ -546,7 +543,6 @@ function Cemetery({ graves, onSelect, onDelete }) {
                             <div className="mini-grave-icon">🪦</div>
                             <div className="mini-grave-name">{grave.mistake}</div>
                             <div className="mini-grave-date">{grave.died}</div>
-                            {grave.ai_generated && <div className="mini-ai-badge">✨</div>}
                         </div>
                         <button
                             className="mini-grave-delete"
