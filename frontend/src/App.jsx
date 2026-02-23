@@ -17,7 +17,78 @@ function getSessionId() {
 const SESSION_ID = getSessionId()
 
 // frontend/src/App.jsx
-const API_URL = 'http://188.212.124.117:3000' // Changed to localhost for your testing
+const API_URL = 'http://188.212.124.117:3000'
+
+// --- FRONTEND-ONLY FALLBACK DATA ---
+const EPITAPHS = {
+    ru: [
+        (m) => `Здесь покоится «${m}» — решение настолько дерзкое, что даже Дарвин аплодировал.`,
+        (m) => `Светлая память «${m}». В 3 часа ночи это казалось гениальной идеей.`,
+        (m) => `Покойся с миром, «${m}». Ты научило нас, как НЕ надо делать.`,
+        (m) => `Любимое «${m}» — рождённое в самоуверенности, умершее от здравого смысла.`,
+    ],
+    en: [
+        (m) => `Here lies "${m}" — a decision so bold, even Darwin applauded.`,
+        (m) => `In loving memory of "${m}". It seemed brilliant at 3am.`,
+        (m) => `Rest in peace, "${m}". You taught us all what NOT to do.`,
+        (m) => `Beloved "${m}" — born in overconfidence, died in hindsight.`,
+    ],
+}
+
+const EULOGIES = {
+    ru: [
+        (m) => `Дорогие скорбящие, мы собрались здесь, чтобы проводить «${m}» в последний путь. Оно ворвалось в нашу жизнь как товарный поезд плохих решений и ушло так же — громко, с дымом и оставив всех в недоумении. Пусть покоится в вечном кринже.`,
+        (m) => `Сегодня мы провожаем «${m}» — решение, которое шло, чтобы наша мудрость могла бежать. Оно появилось в момент слабости и задержалось ровно настолько, чтобы вызвать максимальный стыд. Спасибо за службу.`,
+    ],
+    en: [
+        (m) => `Dearly departed, we gather here today to bid farewell to "${m}". It arrived in our lives like a freight train of bad judgment, and it left the same way — loudly, with smoke, and leaving everyone confused. May it rest in eternal cringe.`,
+        (m) => `We come together to mourn "${m}" — a decision that walked so our wisdom could run. It appeared during a moment of weakness and stayed just long enough to cause maximum embarrassment. Thank you for your service.`,
+    ],
+}
+
+const CAUSES_OF_DEATH = {
+    ru: ["Терминальное перемудривание", "Острая нехватка здравого смысла", "Смерть от проверки реальностью"],
+    en: ["Terminal overthinking", "Acute lack of common sense", "Death by reality check"],
+}
+
+function detectLanguage(text) {
+    const cyrillicCount = (text.match(/[\u0400-\u04FF]/g) || []).length
+    const latinCount = (text.match(/[a-zA-Z]/g) || []).length
+    return cyrillicCount > latinCount ? 'ru' : 'en'
+}
+
+function localBury(mistake) {
+    const lang = detectLanguage(mistake)
+    const now = new Date()
+    const diedRu = `${now.getDate()} ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'][now.getMonth()]} ${now.getFullYear()}`
+    const diedEn = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)]
+
+    const grave = {
+        id: 'local-' + Math.random().toString(36).substr(2, 9),
+        mistake,
+        born: lang === 'ru' ? '2025' : '2025',
+        died: lang === 'ru' ? diedRu : diedEn,
+        epitaph: randomFrom(EPITAPHS[lang])(mistake),
+        eulogy: randomFrom(EULOGIES[lang])(mistake),
+        causeOfDeath: randomFrom(CAUSES_OF_DEATH[lang]),
+        buriedAt: now.toISOString(),
+        isLocal: true
+    }
+
+    const existing = JSON.parse(localStorage.getItem('funeral-local-graves') || '[]')
+    localStorage.setItem('funeral-local-graves', JSON.stringify([grave, ...existing]))
+    return grave
+}
+
+function getLocalGraves() {
+    return JSON.parse(localStorage.getItem('funeral-local-graves') || '[]')
+}
+
+function deleteLocalGrave(id) {
+    const existing = JSON.parse(localStorage.getItem('funeral-local-graves') || '[]')
+    localStorage.setItem('funeral-local-graves', JSON.stringify(existing.filter(g => g.id !== id)))
+}
 
 async function apiFetch(path, options = {}) {
     const headers = {
@@ -25,12 +96,34 @@ async function apiFetch(path, options = {}) {
         'X-Session-Id': SESSION_ID,
         ...options.headers,
     }
-    const res = await fetch(`${API_URL}${path}`, { ...options, headers })
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'Что-то пошло не так в склепе...')
+    try {
+        const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}))
+            throw new Error(err.error || 'Что-то пошло не так в склепе...')
+        }
+        return res.json()
+    } catch (e) {
+        console.warn(`Backend unreachable at ${API_URL}, using frontend fallback for ${path}`)
+        // Handle specific endpoints for frontend-only mode
+        if (path === '/api/graves' && options.method !== 'DELETE') {
+            return getLocalGraves()
+        }
+        if (path === '/api/bury' && options.method === 'POST') {
+            const { mistake } = JSON.parse(options.body)
+            // Simulate server delay for bury
+            await new Promise(r => setTimeout(r, 1500))
+            return localBury(mistake)
+        }
+        if (path.startsWith('/api/graves/') && options.method === 'DELETE') {
+            const id = path.split('/').pop()
+            if (id.startsWith('local-')) {
+                deleteLocalGrave(id)
+                return { success: true }
+            }
+        }
+        throw e // Rethrow if we can't mock it
     }
-    return res.json()
 }
 
 // ====================================================
@@ -284,71 +377,108 @@ function SpiderWebs() {
         <div className="spider-web-container">
             {/* TOP-LEFT corner — large dramatic web */}
             <svg className="web web-tl" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet">
-                <g stroke="rgba(220,220,240,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round">
-                    {/* Main radial threads */}
+                <g stroke="rgba(220,220,240,0.6)" strokeWidth="1.2" fill="none" strokeLinecap="round">
+                    {/* Radial threads */}
                     <line x1="0" y1="0" x2="400" y2="20" />
+                    <line x1="0" y1="0" x2="390" y2="50" />
                     <line x1="0" y1="0" x2="380" y2="80" />
+                    <line x1="0" y1="0" x2="360" y2="120" />
                     <line x1="0" y1="0" x2="340" y2="150" />
+                    <line x1="0" y1="0" x2="310" y2="180" />
                     <line x1="0" y1="0" x2="280" y2="220" />
+                    <line x1="0" y1="0" x2="240" y2="250" />
                     <line x1="0" y1="0" x2="200" y2="290" />
+                    <line x1="0" y1="0" x2="160" y2="320" />
                     <line x1="0" y1="0" x2="120" y2="350" />
+                    <line x1="0" y1="0" x2="80" y2="380" />
                     <line x1="0" y1="0" x2="40" y2="400" />
+                    <line x1="0" y1="0" x2="20" y2="400" />
                     <line x1="0" y1="0" x2="0" y2="400" />
-                    {/* Concentric spiral rings */}
+                    {/* Concentric rings - highly dense */}
+                    <path d="M 30 1 Q 28 15 20 30 Q 15 40 10 45 Q 5 50 1 30" />
                     <path d="M 60 2 Q 54 28 42 54 Q 30 76 18 90 Q 8 100 2 60" />
+                    <path d="M 95 3 Q 85 40 70 75 Q 55 110 35 130 Q 15 150 4 90" />
                     <path d="M 130 5 Q 116 50 95 100 Q 74 145 50 175 Q 30 200 5 130" />
+                    <path d="M 170 6 Q 150 65 125 125 Q 100 185 65 220 Q 40 250 8 170" />
                     <path d="M 210 8 Q 186 75 155 150 Q 120 220 82 268 Q 52 305 8 210" />
+                    <path d="M 255 10 Q 225 88 185 175 Q 145 255 100 310 Q 65 350 10 255" />
                     <path d="M 300 12 Q 265 100 220 200 Q 172 292 118 354 Q 78 395 12 300" />
+                    <path d="M 345 15 Q 300 115 250 225 Q 200 325 140 375 Q 100 400 15 350" />
                     <path d="M 380 18 Q 335 130 280 250 Q 220 360 155 398" />
-                    {/* Extra inner web threads for density */}
-                    <path d="M 25 1 Q 22 12 18 24 Q 14 34 8 40 Q 3 45 1 25" strokeWidth="0.7" opacity="0.7" />
-                    <path d="M 70 3 Q 62 22 52 46 Q 40 66 26 80 Q 14 90 3 70" strokeWidth="0.7" opacity="0.7" />
+                    {/* Cross-threads for extra complexity */}
+                    <path d="M 10 200 Q 100 100 200 10" strokeWidth="0.5" opacity="0.5" />
+                    <path d="M 50 350 Q 150 250 250 150" strokeWidth="0.5" opacity="0.5" />
                 </g>
             </svg>
 
             {/* TOP-RIGHT corner — large dramatic web */}
             <svg className="web web-tr" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMin meet">
-                <g stroke="rgba(220,220,240,0.38)" strokeWidth="1.2" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.55)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="400" y1="0" x2="0" y2="20" />
+                    <line x1="400" y1="0" x2="10" y2="50" />
                     <line x1="400" y1="0" x2="20" y2="80" />
+                    <line x1="400" y1="0" x2="40" y2="120" />
                     <line x1="400" y1="0" x2="60" y2="150" />
+                    <line x1="400" y1="0" x2="90" y2="180" />
                     <line x1="400" y1="0" x2="120" y2="220" />
+                    <line x1="400" y1="0" x2="160" y2="250" />
                     <line x1="400" y1="0" x2="200" y2="290" />
+                    <line x1="400" y1="0" x2="240" y2="320" />
                     <line x1="400" y1="0" x2="280" y2="350" />
+                    <line x1="400" y1="0" x2="320" y2="380" />
                     <line x1="400" y1="0" x2="360" y2="400" />
+                    <line x1="400" y1="0" x2="380" y2="400" />
+
+                    <path d="M 370 1 Q 372 15 380 30 Q 385 40 390 45 Q 395 50 399 30" />
                     <path d="M 340 2 Q 346 28 358 54 Q 370 76 382 90 Q 392 100 398 60" />
+                    <path d="M 305 3 Q 315 40 330 75 Q 345 110 365 130 Q 385 150 396 90" />
                     <path d="M 270 5 Q 284 50 305 100 Q 326 145 350 175 Q 370 200 395 130" />
+                    <path d="M 230 6 Q 250 65 275 125 Q 300 185 335 220 Q 360 250 392 170" />
                     <path d="M 190 8 Q 214 75 245 150 Q 280 220 318 268 Q 348 305 392 210" />
+                    <path d="M 145 10 Q 175 88 215 175 Q 255 255 300 310 Q 335 350 390 255" />
                     <path d="M 100 12 Q 135 100 180 200 Q 228 292 282 354 Q 322 395 388 300" />
+                    <path d="M 55 15 Q 100 115 150 225 Q 200 325 260 375 Q 300 400 385 350" />
                     <path d="M 20 18 Q 65 130 120 250 Q 180 360 245 398" />
-                    <path d="M 375 1 Q 378 12 382 24 Q 386 34 392 40 Q 397 45 399 25" strokeWidth="0.7" opacity="0.7" />
                 </g>
             </svg>
 
             {/* BOTTOM-LEFT corner web */}
             <svg className="web web-bl" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
-                <g stroke="rgba(220,220,240,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.5)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="0" y1="300" x2="300" y2="280" />
                     <line x1="0" y1="300" x2="280" y2="220" />
                     <line x1="0" y1="300" x2="220" y2="140" />
                     <line x1="0" y1="300" x2="140" y2="70" />
                     <line x1="0" y1="300" x2="60" y2="20" />
+                    <line x1="0" y1="300" x2="300" y2="150" strokeWidth="0.5" opacity="0.4" />
+                    <line x1="0" y1="300" x2="150" y2="0" strokeWidth="0.5" opacity="0.4" />
+
                     <path d="M 50 298 Q 46 280 52 264 Q 30 276 12 295" />
+                    <path d="M 80 294 Q 70 265 80 240 Q 50 260 30 288" />
                     <path d="M 110 290 Q 100 258 110 222 Q 68 248 42 280" />
+                    <path d="M 145 284 Q 130 245 140 205 Q 90 235 60 270" />
                     <path d="M 180 278 Q 162 235 172 185 Q 115 220 80 260" />
+                    <path d="M 220 270 Q 195 220 205 160 Q 140 200 100 245" />
+                    <path d="M 260 260 Q 230 200 240 130 Q 170 170 120 220" />
                 </g>
             </svg>
 
             {/* BOTTOM-RIGHT corner web */}
             <svg className="web web-br" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax meet">
-                <g stroke="rgba(220,220,240,0.38)" strokeWidth="1.2" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.5)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="300" y1="300" x2="0" y2="280" />
                     <line x1="300" y1="300" x2="20" y2="220" />
                     <line x1="300" y1="300" x2="80" y2="140" />
                     <line x1="300" y1="300" x2="160" y2="70" />
                     <line x1="300" y1="300" x2="240" y2="20" />
+                    <line x1="300" y1="300" x2="0" y2="150" strokeWidth="0.5" opacity="0.4" />
+                    <line x1="300" y1="300" x2="150" y2="0" strokeWidth="0.5" opacity="0.4" />
+
                     <path d="M 250 298 Q 254 280 248 264 Q 270 276 288 295" />
+                    <path d="M 220 294 Q 230 265 220 240 Q 250 260 270 288" />
                     <path d="M 190 290 Q 200 258 190 222 Q 232 248 258 280" />
+                    <path d="M 155 284 Q 170 245 160 205 Q 210 235 240 270" />
+                    <path d="M 120 278 Q 138 235 128 185 Q 185 220 220 260" />
                 </g>
             </svg>
 
@@ -487,8 +617,7 @@ function Confessional({ onSubmit, isLoading }) {
                 </label>
                 <textarea
                     className="confessional-textarea"
-                    placeholder="I vibe-coded this website all night knowing no one will ever use it..."
-                    value={mistake}
+                    placeholder="I spent all time building this… for absolutely u 😌"                    value={mistake}
                     onChange={(e) => setMistake(e.target.value)}
                     maxLength={500}
                     disabled={isLoading}
