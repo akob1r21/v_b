@@ -17,7 +17,7 @@ function getSessionId() {
 const SESSION_ID = getSessionId()
 
 // frontend/src/App.jsx
-const API_URL = 'http://localhost:3000' // Changed to localhost for your testing
+const API_URL = 'http://188.212.124.117:3000' // Changed to localhost for your testing
 
 async function apiFetch(path, options = {}) {
     const headers = {
@@ -284,7 +284,7 @@ function SpiderWebs() {
         <div className="spider-web-container">
             {/* TOP-LEFT corner — large dramatic web */}
             <svg className="web web-tl" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet">
-                <g stroke="rgba(200,200,220,0.13)" strokeWidth="1" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     {/* Main radial threads */}
                     <line x1="0" y1="0" x2="400" y2="20" />
                     <line x1="0" y1="0" x2="380" y2="80" />
@@ -308,7 +308,7 @@ function SpiderWebs() {
 
             {/* TOP-RIGHT corner — large dramatic web */}
             <svg className="web web-tr" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMin meet">
-                <g stroke="rgba(200,200,220,0.11)" strokeWidth="1" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.38)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="400" y1="0" x2="0" y2="20" />
                     <line x1="400" y1="0" x2="20" y2="80" />
                     <line x1="400" y1="0" x2="60" y2="150" />
@@ -327,7 +327,7 @@ function SpiderWebs() {
 
             {/* BOTTOM-LEFT corner web */}
             <svg className="web web-bl" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
-                <g stroke="rgba(200,200,220,0.08)" strokeWidth="0.9" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="0" y1="300" x2="300" y2="280" />
                     <line x1="0" y1="300" x2="280" y2="220" />
                     <line x1="0" y1="300" x2="220" y2="140" />
@@ -341,7 +341,7 @@ function SpiderWebs() {
 
             {/* BOTTOM-RIGHT corner web */}
             <svg className="web web-br" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax meet">
-                <g stroke="rgba(200,200,220,0.07)" strokeWidth="0.9" fill="none" strokeLinecap="round">
+                <g stroke="rgba(220,220,240,0.38)" strokeWidth="1.2" fill="none" strokeLinecap="round">
                     <line x1="300" y1="300" x2="0" y2="280" />
                     <line x1="300" y1="300" x2="20" y2="220" />
                     <line x1="300" y1="300" x2="80" y2="140" />
@@ -354,7 +354,7 @@ function SpiderWebs() {
 
             {/* RIGHT SIDE thin web tendrils */}
             <svg className="web web-right" viewBox="0 0 60 800" xmlns="http://www.w3.org/2000/svg">
-                <g stroke="rgba(200,200,220,0.06)" strokeWidth="0.7" fill="none">
+                <g stroke="rgba(220,220,240,0.25)" strokeWidth="1" fill="none">
                     <line x1="60" y1="0" x2="0" y2="200" />
                     <line x1="60" y1="100" x2="0" y2="350" />
                     <line x1="60" y1="250" x2="10" y2="500" />
@@ -367,7 +367,7 @@ function SpiderWebs() {
 
             {/* LEFT SIDE thin web tendrils */}
             <svg className="web web-left" viewBox="0 0 60 800" xmlns="http://www.w3.org/2000/svg">
-                <g stroke="rgba(200,200,220,0.06)" strokeWidth="0.7" fill="none">
+                <g stroke="rgba(220,220,240,0.25)" strokeWidth="1" fill="none">
                     <line x1="0" y1="200" x2="60" y2="0" />
                     <line x1="0" y1="350" x2="60" y2="100" />
                     <line x1="10" y1="500" x2="60" y2="250" />
@@ -487,7 +487,7 @@ function Confessional({ onSubmit, isLoading }) {
                 </label>
                 <textarea
                     className="confessional-textarea"
-                    placeholder="Я купил 47 доменных имён в 3 часа ночи, потому что думал стану технологическим магнатом..."
+                    placeholder="I vibe-coded this website all night knowing no one will ever use it..."
                     value={mistake}
                     onChange={(e) => setMistake(e.target.value)}
                     maxLength={500}
@@ -507,7 +507,7 @@ function Confessional({ onSubmit, isLoading }) {
                     disabled={!mistake.trim() || isLoading}
                 >
                     <span className="btn-skull">💀</span>
-                    <span className="btn-text">Похоронить это решение</span>
+                    <span className="btn-text">Start</span>
                     <span className="btn-skull">💀</span>
                 </button>
             </form>

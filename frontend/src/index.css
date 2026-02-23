@@ -76,29 +76,29 @@
 .web-tl {
   top: 0;
   left: 0;
-  width: min(45vw, 420px);
-  height: min(45vh, 420px);
+  width: min(50vw, 550px);
+  height: min(50vh, 550px);
 }
 
 .web-tr {
   top: 0;
   right: 0;
-  width: min(42vw, 400px);
-  height: min(42vh, 400px);
+  width: min(48vw, 520px);
+  height: min(48vh, 520px);
 }
 
 .web-bl {
   bottom: 0;
   left: 0;
-  width: min(32vw, 300px);
-  height: min(35vh, 300px);
+  width: min(45vw, 450px);
+  height: min(45vh, 450px);
 }
 
 .web-br {
   bottom: 0;
   right: 0;
-  width: min(28vw, 300px);
-  height: min(32vh, 300px);
+  width: min(42vw, 450px);
+  height: min(45vh, 450px);
 }
 
 .web-right {
@@ -1575,11 +1575,12 @@ body {
 
   /* Subtler decorative webs on mobile */
   .spider-web-container {
-    opacity: 0.4;
+    opacity: 0.8;
+    /* Increased opacity on mobile */
   }
 
   .web {
-    transform: scale(0.7);
+    /* No scaling down, keep them prominent */
     transform-origin: top left;
   }
 
