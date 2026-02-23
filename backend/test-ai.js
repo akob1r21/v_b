@@ -11,7 +11,7 @@ async function testAI() {
 
     try {
         const genAI = new GoogleGenerativeAI(key)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" })
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" })
         const result = await model.generateContent("Hello, respond with a joke about a cat and JSON.")
         const response = await result.response
         console.log("Response:", response.text())

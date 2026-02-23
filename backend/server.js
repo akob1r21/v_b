@@ -14,20 +14,17 @@ const ADMIN_KEY = process.env.ADMIN_KEY || 'funeral-admin-2026'
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 
-let genAI = null
-let geminiModel = null
+let groq = null
 try {
-    if (process.env.GEMINI_API_KEY) {
-        const { GoogleGenerativeAI } = await import('@google/generative-ai')
-        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        const modelName = "gemini-2.0-flash-lite"
-        geminiModel = genAI.getGenerativeModel({ model: modelName })
-        console.log(`✅ Gemini connected (${modelName}) — AI-powered burials enabled`)
+    if (process.env.GROQ_API_KEY) {
+        const { default: Groq } = await import('groq-sdk')
+        groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+        console.log(`✅ Groq connected — AI-powered burials enabled`)
     } else {
-        console.log('⚠️  No GEMINI_API_KEY found — using static templates')
+        console.log('⚠️  No GROQ_API_KEY found — using static templates')
     }
 } catch (e) {
-    console.warn('⚠️  Gemini setup failed, using static fallback:', e.message)
+    console.warn('⚠️  Groq setup failed, using static fallback:', e.message)
 }
 
 // ====================================================
@@ -164,7 +161,7 @@ const CAUSES_OF_DEATH = {
 // ====================================================
 
 async function generateAIContent(mistake, lang) {
-    if (!geminiModel) return null
+    if (!groq) return null
 
     const isRu = lang === 'ru'
     const systemInstruction = isRu
@@ -177,7 +174,7 @@ async function generateAIContent(mistake, lang) {
         : `You are a dark, sarcastic officiant at the "Funeral for Stupid Decisions". Rules:
 1. ALWAYS analyze the USER'S SPECIFIC mistake — never write generic phrases.
 2. Identify the REAL human flaw behind the mistake (laziness, greed, overconfidence, naivety, etc.).
-3. Be dramatic but CLEAR — no abstract metaphors that are hard to understand.
+3. Be dramatic but CLEAR — no abstract metaphors that are hard to understand be understandable beginer friendly for english.
 4. Every sentence should hit where it hurts — sharp, intelligent, darkly funny.
 5. Write so the person laughs and feels the sting of truth at the same time.`
 
@@ -207,25 +204,18 @@ Return ONLY JSON:
 
     try {
         console.log(`🤖 AI Request: mistake="${mistake}" lang=${lang}`)
-        const result = await geminiModel.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-                maxOutputTokens: 600,
-                temperature: 0.9,
-            }
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.3-70b-versatile',
+            temperature: 0.9,
+            max_tokens: 600,
+            response_format: { type: 'json_object' }
         })
-        const response = await result.response
-        let text = response.text()
-        console.log(`🤖 AI Raw Response:`, text)
 
-        // Robust JSON extraction
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) text = jsonMatch[0]
+        const text = completion.choices[0].message.content
+        console.log(`🤖 AI Output:`, text)
 
         const parsed = JSON.parse(text)
-        console.log(`🤖 AI Parsed Data:`, parsed)
-
-        // Accept 'cause' or 'causeOfDeath'
         const cause = parsed.cause || parsed.causeOfDeath || parsed.cause_of_death
 
         if (parsed.epitaph && parsed.eulogy && cause) {
@@ -238,7 +228,7 @@ Return ONLY JSON:
         console.warn('⚠️ AI returned partial data:', text)
         return null
     } catch (e) {
-        console.error('❌ Gemini generation error:', e.message)
+        console.error('❌ Groq generation error:', e.message)
         return null
     }
 }
@@ -424,7 +414,7 @@ app.get('/api/health', (req, res) => {
         totalBurials: allGraves.length,
         activeBurials: allGraves.filter(g => !g.is_deleted).length,
         softDeleted: allGraves.filter(g => g.is_deleted).length,
-        aiEnabled: !!geminiModel,
+        aiEnabled: !!groq,
         timestamp: new Date().toISOString(),
     })
 })
@@ -438,5 +428,5 @@ app.listen(PORT, () => {
     console.log(`   GET    /api/admin/logs     — [ADMIN] Лог файл`)
     console.log(`   GET    /api/health         — Статус`)
     console.log(`\n   Admin key: ${ADMIN_KEY}`)
-    console.log(`   AI: ${geminiModel ? '✅ enabled' : '⚠️  disabled (no GEMINI_API_KEY)'}\n`)
+    console.log(`   AI: ${groq ? '✅ enabled (Groq)' : '⚠️  disabled (no GROQ_API_KEY)'}\n`)
 })
