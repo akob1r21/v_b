@@ -56,6 +56,156 @@
   --shadow-tomb: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
+/* ==============================================
+   🕸️ FULL-EDGE SPIDER WEB SYSTEM
+   ============================================== */
+
+.spider-web-container {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.web {
+  position: absolute;
+  pointer-events: none;
+}
+
+.web-tl {
+  top: 0;
+  left: 0;
+  width: min(45vw, 420px);
+  height: min(45vh, 420px);
+}
+
+.web-tr {
+  top: 0;
+  right: 0;
+  width: min(42vw, 400px);
+  height: min(42vh, 400px);
+}
+
+.web-bl {
+  bottom: 0;
+  left: 0;
+  width: min(32vw, 300px);
+  height: min(35vh, 300px);
+}
+
+.web-br {
+  bottom: 0;
+  right: 0;
+  width: min(28vw, 300px);
+  height: min(32vh, 300px);
+}
+
+.web-right {
+  right: 0;
+  top: 35vh;
+  width: 50px;
+  height: 55vh;
+}
+
+.web-left {
+  left: 0;
+  top: 30vh;
+  width: 50px;
+  height: 55vh;
+}
+
+/* ==============================================
+   🎞️ FILM GRAIN NOISE
+   ============================================== */
+
+.film-grain {
+  position: fixed;
+  inset: -20%;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  animation: grainShift 0.09s steps(2) infinite;
+}
+
+@keyframes grainShift {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-3%, 5%);
+  }
+
+  50% {
+    transform: translate(5%, -2%);
+  }
+
+  75% {
+    transform: translate(-2%, -4%);
+  }
+
+  100% {
+    transform: translate(4%, 2%);
+  }
+}
+
+/* ==============================================
+   🌑 DARK VIGNETTE
+   ============================================== */
+
+.vignette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 40%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.4) 70%,
+      rgba(0, 0, 0, 0.85) 100%);
+}
+
+/* ==============================================
+   ⚡ LIGHTNING FLASH
+   ============================================== */
+
+.spider-web {
+  position: fixed;
+  width: clamp(100px, 15vw, 250px);
+  height: clamp(100px, 15vw, 250px);
+  z-index: 100;
+  opacity: 0.3;
+  pointer-events: none;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05));
+}
+
+.lightning-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(200, 220, 255, 0.08);
+  animation: lightningFlare 0.12s ease-out forwards;
+}
+
+@keyframes lightningFlare {
+  0% {
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;
@@ -170,10 +320,10 @@ body {
 }
 
 .header-skull {
-  font-size: 3.5rem;
-  margin-bottom: var(--space-sm);
-  filter: drop-shadow(0 0 12px rgba(255, 170, 0, 0.4));
-  animation: skullGlow 3s ease-in-out infinite alternate;
+  font-size: clamp(2.5rem, 10vw, 3.5rem);
+  margin-bottom: 0;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+  animation: flicker 4s infinite alternate;
 }
 
 @keyframes skullGlow {
@@ -188,12 +338,12 @@ body {
 
 .header h1 {
   font-family: var(--font-gothic);
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(1.8rem, 8vw, 3.5rem);
   color: var(--spirit);
   letter-spacing: 2px;
   line-height: 1.2;
   margin-bottom: var(--space-md);
-  text-shadow: 0 0 30px rgba(119, 51, 187, 0.4);
+  text-shadow: 0 0 15px rgba(138, 58, 74, 0.4), 0 0 30px rgba(0, 0, 0, 0.8);
 }
 
 .header p {
@@ -272,28 +422,144 @@ body {
   color: var(--ash);
 }
 
+/* ==============================================
+   🪌 CRACKED STONE BUTTON — 3D Cinematic
+   ============================================== */
+
 .bury-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: 14px;
   width: 100%;
   margin-top: var(--space-lg);
-  padding: var(--space-md) var(--space-xl);
-  background: linear-gradient(135deg, var(--purple-deep), var(--blood));
-  border: 1px solid rgba(204, 34, 68, 0.3);
-  border-radius: var(--radius);
-  color: var(--spirit);
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 600;
+  padding: 18px var(--space-xl) 20px;
+  border: none;
   cursor: pointer;
-  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+
+  /* Stone slab gradient layers — dark purple-grey stone */
+  background:
+    linear-gradient(180deg,
+      #7a6085 0%,
+      #56406b 8%,
+      #3e2f58 20%,
+      #342550 35%,
+      #2c2048 50%,
+      #342850 65%,
+      #3e3060 80%,
+      #4a3870 90%,
+      #332850 100%);
+
+  /* Asymmetric 3D beveled border like carved stone */
+  border-top: 3px solid rgba(195, 155, 225, 0.65);
+  border-left: 3px solid rgba(170, 130, 200, 0.45);
+  border-right: 3px solid rgba(20, 10, 35, 0.95);
+  border-bottom: 5px solid rgba(5, 2, 15, 0.98);
+  border-radius: 3px;
+
+  /* Multi-layer shadow for weight + ambient glow */
+  box-shadow:
+    0 7px 0 rgba(0, 0, 0, 0.85),
+    0 12px 30px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(230, 190, 255, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 0 50px rgba(120, 60, 170, 0.15);
+
+  font-family: var(--font-gothic);
+  font-size: 1.2rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #ddc8f0;
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.95),
+    0 1px 4px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(180, 90, 230, 0.22);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
 }
 
-.bury-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(204, 34, 68, 0.3);
+/* Scratched metallic stone surface */
+.bury-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(93deg,
+      transparent 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 2px,
+      transparent 9px),
+    linear-gradient(168deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 30%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.06) 70%,
+      rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* Fracture crack lines across the stone */
+.bury-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(41deg, transparent 22%, rgba(0, 0, 0, 0.18) 22.6%, transparent 23.2%),
+    linear-gradient(-25deg, transparent 58%, rgba(0, 0, 0, 0.12) 58.6%, transparent 59.2%),
+    linear-gradient(72deg, transparent 74%, rgba(255, 255, 255, 0.04) 74.6%, transparent 75.2%),
+    linear-gradient(-55deg, transparent 38%, rgba(0, 0, 0, 0.1) 38.5%, transparent 39%);
+  pointer-events: none;
+}
+
+.bury-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow:
+    0 11px 0 rgba(0, 0, 0, 0.85),
+    0 16px 40px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(230, 190, 255, 0.25),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 0 80px rgba(180, 80, 230, 0.35),
+    0 0 120px rgba(230, 60, 110, 0.12);
+  border-top-color: rgba(230, 180, 255, 0.85);
+  color: #f0e0ff;
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.95),
+    0 1px 4px rgba(0, 0, 0, 0.95),
+    0 0 30px rgba(220, 110, 255, 0.6);
+}
+
+.bury-btn:active:not(:disabled),
+.bury-btn--strike {
+  transform: translateY(5px) !important;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.85),
+    0 5px 18px rgba(0, 0, 0, 0.65),
+    inset 0 4px 8px rgba(0, 0, 0, 0.55),
+    0 0 35px rgba(180, 80, 230, 0.35);
+  border-top-color: rgba(90, 55, 130, 0.4);
+  border-bottom-width: 2px;
+}
+
+.btn-skull {
+  font-size: 1.05rem;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 8px rgba(200, 100, 255, 0.5));
+  flex-shrink: 0;
+}
+
+.btn-text {
+  flex: 1;
+  text-align: center;
+}
+
+.bury-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5) !important;
+  filter: grayscale(0.5);
 }
 
 /* --- Digging Scene (Animated Stickmen) --- */
@@ -850,6 +1116,7 @@ body {
   color: var(--bone);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
@@ -933,51 +1200,171 @@ body {
   justify-content: center;
 }
 
+/* ==============================================
+   🪨 UNIFIED STONE BUTTONS (action-btn & bury-btn)
+   ============================================== */
+
+.bury-btn,
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius);
-  font-family: var(--font-serif);
-  font-size: 1rem;
+  gap: 12px;
   cursor: pointer;
-  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-gothic);
+  text-transform: uppercase;
+  color: #ddc8f0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+
+  /* Stone slab gradient */
+  background:
+    linear-gradient(180deg,
+      #7a6085 0%,
+      #56406b 8%,
+      #3e2f58 20%,
+      #2c2048 50%,
+      #342850 65%,
+      #3e3060 80%,
+      #332850 100%);
+
+  /* Asymmetric 3D beveled border */
+  border-top: 3px solid rgba(195, 155, 225, 0.5);
+  border-left: 3px solid rgba(170, 130, 200, 0.3);
+  border-right: 2px solid rgba(10, 5, 20, 0.9);
+  border-bottom: 4px solid rgba(5, 2, 10, 0.95);
+
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.8),
+    0 10px 20px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(230, 190, 255, 0.15);
+}
+
+.bury-btn {
+  width: 100%;
+  margin-top: var(--space-lg);
+  padding: 18px var(--space-xl) 20px;
+  font-size: 1.2rem;
+  letter-spacing: 3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.action-btn {
+  padding: 12px var(--space-lg) 14px;
+  font-size: 1rem;
+  letter-spacing: 1.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  min-width: 220px;
+}
+
+/* Scratched metallic stone surface for both */
+.bury-btn::before,
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(93deg, transparent 0, rgba(255, 255, 255, 0.012) 1px, transparent 2px, transparent 8px),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%, rgba(0, 0, 0, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* Fracture cracks */
+.bury-btn::after,
+.action-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(41deg, transparent 22%, rgba(0, 0, 0, 0.15) 22.4%, transparent 22.8%),
+    linear-gradient(-25deg, transparent 58%, rgba(0, 0, 0, 0.1) 58.4%, transparent 58.8%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.bury-btn:hover:not(:disabled),
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, 0.8),
+    0 12px 25px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(230, 190, 255, 0.2),
+    0 0 50px rgba(180, 80, 230, 0.25);
+  border-top-color: rgba(230, 180, 255, 0.7);
+  color: #f0e0ff;
+}
+
+.bury-btn:active:not(:disabled),
+.action-btn:active:not(:disabled),
+.bury-btn--strike {
+  transform: translateY(4px) !important;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 4px 10px rgba(0, 0, 0, 0.6),
+    inset 0 3px 6px rgba(0, 0, 0, 0.5);
+  border-top-color: rgba(90, 55, 130, 0.3);
+  border-bottom-width: 2px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.sound-toggle {
+  position: absolute;
+  left: 0;
+  background: rgba(40, 30, 50, 0.4);
   border: 1px solid var(--ghost);
-  background: var(--crypt);
-  color: var(--bone);
-}
-
-.action-btn:hover {
-  background: var(--tombstone);
-  border-color: var(--ash);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.action-btn.primary {
-  background: linear-gradient(135deg, var(--purple-deep), var(--blood));
-  border-color: rgba(204, 34, 68, 0.4);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all var(--transition);
   color: var(--spirit);
-  font-weight: 600;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
-.action-btn.primary:hover {
-  box-shadow: 0 6px 25px rgba(204, 34, 68, 0.25), 0 0 40px rgba(119, 51, 187, 0.15);
-  border-color: rgba(204, 34, 68, 0.7);
-}
-
-.action-btn.secondary {
-  background: linear-gradient(135deg, rgba(74, 26, 122, 0.4), rgba(42, 42, 62, 0.6));
-  border-color: rgba(119, 51, 187, 0.4);
-  color: var(--spirit);
-}
-
-.action-btn.secondary:hover {
-  background: linear-gradient(135deg, rgba(74, 26, 122, 0.6), rgba(42, 42, 62, 0.8));
+.sound-toggle:hover {
+  background: rgba(60, 40, 80, 0.6);
   border-color: var(--purple-mist);
-  box-shadow: 0 6px 20px rgba(119, 51, 187, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(119, 51, 187, 0.2);
+}
+
+.action-btn .btn-skull {
+  font-size: 0.9rem;
+}
+
+.btn-skull {
+  opacity: 0.8;
+  filter: drop-shadow(0 0 8px rgba(200, 100, 255, 0.4));
+  flex-shrink: 0;
+}
+
+.btn-text {
+  flex: 1;
+  text-align: center;
+}
+
+.bury-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5) !important;
+  filter: grayscale(0.5);
 }
 
 /* --- Bury button disabled --- */
@@ -1047,24 +1434,170 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
+  .app-container {
+    padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px) 20px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   .header h1 {
+    font-size: clamp(1.4rem, 7vw, 1.8rem);
+    letter-spacing: 1px;
+    padding: 0;
+    max-width: 90vw;
+    margin: 0 auto var(--space-sm);
+  }
+
+  .header-skull {
     font-size: 2.2rem;
   }
 
+  .confessional-box {
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 350px;
+    /* Contained on iPhone 14 */
+    margin: var(--space-md) auto;
+  }
+
+  .confessional-textarea {
+    font-size: 1rem;
+    min-height: 120px;
+  }
+
+  .bury-btn {
+    padding: 14px 10px 16px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+  }
+
   .digging-scene {
-    padding: var(--space-xl) var(--space-md);
+    padding: var(--space-xl) 0;
+    transform: scale(0.65);
+    /* Scaled down more for very narrow screens */
+    margin: -20px auto;
+    /* Pull up to save space */
+    width: 100vw;
+    left: 50%;
+    position: relative;
+    transform-origin: center;
+    margin-left: -50vw;
+  }
+
+  /* Fixed Cemetery Grid for Mobile */
+  .cemetery-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    padding: 0 10px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .mini-grave {
+    padding: 16px;
+    margin: 0 10px;
+  }
+
+  .mini-grave-name {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  /* Gravestone adjustments */
+  .gravestone {
+    padding: 30px 12px;
+    width: calc(100% - 20px);
+    max-width: 340px;
+    margin: 10px auto;
+    border-radius: 12px;
+  }
+
+  .grave-rip {
+    font-size: 1.1rem;
+  }
+
+  .grave-name {
+    font-size: 1.3rem;
+  }
+
+  .grave-mistake {
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: 10px 0;
+  }
+
+  .grave-epitaph {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: var(--space-md) 0;
+  }
+
+  /* Action buttons stack on mobile */
+  .grave-actions {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    margin-top: var(--space-lg);
+  }
+
+  .action-btn {
+    min-width: unset;
+    width: 90%;
+    max-width: 240px;
+    padding: 12px 10px;
+    /* Reduced horizontal padding */
+    font-size: 0.8rem;
+    /* Slightly smaller font */
   }
 
   .scroll-modal {
-    width: 95%;
-    padding: var(--space-xl) var(--space-md);
+    width: 94%;
+    max-height: 85vh;
+    padding: 40px 20px;
   }
 
   .scroll-title {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
   }
 
   .scroll-text {
-    font-size: 1.1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+  }
+
+  /* Subtler decorative webs on mobile */
+  .spider-web-container {
+    opacity: 0.4;
+  }
+
+  .web {
+    transform: scale(0.7);
+    transform-origin: top left;
+  }
+
+  .web-tr {
+    transform-origin: top right;
+  }
+
+  .web-bl {
+    transform-origin: bottom left;
+  }
+
+  .web-br {
+    transform-origin: bottom right;
+  }
+}
+
+@media (min-width: 450px) and (max-width: 640px) {
+  .app-container {
+    max-width: 440px;
   }
 }

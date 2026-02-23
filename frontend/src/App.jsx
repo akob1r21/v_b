@@ -17,7 +17,7 @@ function getSessionId() {
 const SESSION_ID = getSessionId()
 
 // frontend/src/App.jsx
-const API_URL = 'http://188.212.124.117:3000' // Changed to localhost for your testing
+const API_URL = 'http://localhost:3000' // Changed to localhost for your testing
 
 async function apiFetch(path, options = {}) {
     const headers = {
@@ -80,14 +80,349 @@ function Particles() {
     )
 }
 
+// ==============================================
+// 🔊 AMBIENT HORROR SOUNDSCAPE
+// ==============================================
+
+function AmbientHorror({ isMuted }) {
+    const audioContextRef = useRef(null);
+    const nodesRef = useRef([]);
+
+    const startAudio = useCallback(() => {
+        if (audioContextRef.current) return;
+
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            audioContextRef.current = ctx;
+
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(isMuted ? 0.0001 : 0.4, ctx.currentTime);
+            masterGain.connect(ctx.destination);
+
+            // --- LAYER 1: Deep Dread Drone ---
+            const drone = ctx.createOscillator();
+            const droneGain = ctx.createGain();
+            drone.type = 'sawtooth';
+            drone.frequency.setValueAtTime(40, ctx.currentTime);
+
+            const droneLFO = ctx.createOscillator();
+            const droneLFOGain = ctx.createGain();
+            droneLFO.frequency.setValueAtTime(0.5, ctx.currentTime);
+            droneLFOGain.gain.setValueAtTime(5, ctx.currentTime);
+            droneLFO.connect(droneLFOGain);
+            droneLFOGain.connect(drone.frequency);
+
+            droneGain.gain.setValueAtTime(0.15, ctx.currentTime);
+            const droneFilter = ctx.createBiquadFilter();
+            droneFilter.type = 'lowpass';
+            droneFilter.frequency.setValueAtTime(200, ctx.currentTime);
+
+            drone.connect(droneFilter);
+            droneFilter.connect(droneGain);
+            droneGain.connect(masterGain);
+            drone.start();
+            droneLFO.start();
+
+            // --- LAYER 2: Discordant "Strings" ---
+            const createString = (freq, detune, gainVal) => {
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                osc.detune.setValueAtTime(detune, ctx.currentTime);
+                g.gain.setValueAtTime(0, ctx.currentTime);
+
+                // Volume swells
+                const now = ctx.currentTime;
+                const swell = () => {
+                    const t = ctx.currentTime;
+                    g.gain.linearRampToValueAtTime(gainVal, t + 4 + Math.random() * 4);
+                    g.gain.linearRampToValueAtTime(0, t + 8 + Math.random() * 4);
+                };
+                setInterval(swell, 12000);
+                swell();
+
+                osc.connect(g);
+                g.connect(masterGain);
+                osc.start();
+            };
+            createString(220, 5, 0.03);
+            createString(223, -5, 0.03); // Minor second dissonance
+            createString(311, 10, 0.02); // Tritone dissonance
+
+            // --- LAYER 3: Metallic Shiver ---
+            const shiverBuffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+            const shiverData = shiverBuffer.getChannelData(0);
+            for (let i = 0; i < shiverBuffer.length; i++) shiverData[i] = Math.random() * 2 - 1;
+
+            const shiver = ctx.createBufferSource();
+            shiver.buffer = shiverBuffer;
+            shiver.loop = true;
+
+            const shiverFilter = ctx.createBiquadFilter();
+            shiverFilter.type = 'bandpass';
+            shiverFilter.frequency.setValueAtTime(3000, ctx.currentTime);
+            shiverFilter.Q.setValueAtTime(12, ctx.currentTime);
+
+            const shiverGain = ctx.createGain();
+            shiverGain.gain.setValueAtTime(0.01, ctx.currentTime);
+
+            // Rapid shivering amplitude modulation
+            const shiverAM = ctx.createOscillator();
+            const shiverAMGain = ctx.createGain();
+            shiverAM.frequency.setValueAtTime(25, ctx.currentTime);
+            shiverAMGain.gain.setValueAtTime(0.015, ctx.currentTime);
+            shiverAM.connect(shiverAMGain);
+            shiverAMGain.connect(shiverGain.gain);
+            shiverAM.start();
+
+            shiver.connect(shiverFilter);
+            shiverFilter.connect(shiverGain);
+            shiverGain.connect(masterGain);
+            shiver.start();
+
+            // --- LAYER 4: Heartbeat Pulse ---
+            const createBeat = () => {
+                if (isMuted) return;
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(55, ctx.currentTime);
+                g.gain.setValueAtTime(0, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                const f = ctx.createBiquadFilter();
+                f.type = 'lowpass';
+                f.frequency.setValueAtTime(80, ctx.currentTime);
+                osc.connect(f);
+                f.connect(g);
+                g.connect(masterGain);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            };
+            const beatInterval = setInterval(() => {
+                createBeat();
+                setTimeout(createBeat, 350);
+            }, 1800);
+
+            // --- LAYER 5: Ghostly Whispers ---
+            const whisperGain = ctx.createGain();
+            whisperGain.gain.setValueAtTime(0.005, ctx.currentTime);
+            const whisperLFO = ctx.createOscillator();
+            const whisperLFOG = ctx.createGain();
+            whisperLFO.frequency.setValueAtTime(0.1, ctx.currentTime);
+            whisperLFOG.gain.setValueAtTime(0.005, ctx.currentTime);
+            whisperLFO.connect(whisperLFOG);
+            whisperLFOG.connect(whisperGain.gain);
+            whisperLFO.start();
+
+            const shiver2 = ctx.createBufferSource();
+            shiver2.buffer = shiverBuffer;
+            shiver2.loop = true;
+            const whisperFilter = ctx.createBiquadFilter();
+            whisperFilter.type = 'highpass';
+            whisperFilter.frequency.setValueAtTime(6000, ctx.currentTime);
+            shiver2.connect(whisperFilter);
+            whisperFilter.connect(whisperGain);
+            whisperGain.connect(masterGain);
+            shiver2.start();
+
+            // --- LAYER 6: Distortion Grit (Lo-fi horror) ---
+            const distortion = ctx.createWaveShaper();
+            function makeDistortionCurve(amount) {
+                const k = typeof amount === 'number' ? amount : 50;
+                const n_samples = 44100;
+                const curve = new Float32Array(n_samples);
+                const deg = Math.PI / 180;
+                for (let i = 0; i < n_samples; ++i) {
+                    const x = i * 2 / n_samples - 1;
+                    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            }
+            distortion.curve = makeDistortionCurve(10);
+            distortion.oversample = '4x';
+            // We'll skip connecting high-res distortion for mobile performance,
+            // just use a subtle lowpass grit.
+
+            nodesRef.current = [masterGain, beatInterval];
+        } catch (e) {
+            console.warn("Horror Audio Pipeline failed", e);
+        }
+    }, [isMuted]);
+
+    useEffect(() => {
+        const handleInteraction = () => {
+            startAudio();
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+        window.addEventListener('click', handleInteraction);
+        window.addEventListener('keydown', handleInteraction);
+        return () => {
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+    }, [startAudio]);
+
+    useEffect(() => {
+        if (nodesRef.current.length > 0) {
+            const now = audioContextRef.current.currentTime;
+            nodesRef.current[0].gain.exponentialRampToValueAtTime(isMuted ? 0.0001 : 0.4, now + 1.0);
+        }
+    }, [isMuted]);
+
+    return null;
+}
+
+// ====================================================
+// 🕸️ Spider Webs — FULL EDGE COVERAGE
+// ====================================================
+
+function SpiderWebs() {
+    return (
+        <div className="spider-web-container">
+            {/* TOP-LEFT corner — large dramatic web */}
+            <svg className="web web-tl" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet">
+                <g stroke="rgba(200,200,220,0.13)" strokeWidth="1" fill="none" strokeLinecap="round">
+                    {/* Main radial threads */}
+                    <line x1="0" y1="0" x2="400" y2="20" />
+                    <line x1="0" y1="0" x2="380" y2="80" />
+                    <line x1="0" y1="0" x2="340" y2="150" />
+                    <line x1="0" y1="0" x2="280" y2="220" />
+                    <line x1="0" y1="0" x2="200" y2="290" />
+                    <line x1="0" y1="0" x2="120" y2="350" />
+                    <line x1="0" y1="0" x2="40" y2="400" />
+                    <line x1="0" y1="0" x2="0" y2="400" />
+                    {/* Concentric spiral rings */}
+                    <path d="M 60 2 Q 54 28 42 54 Q 30 76 18 90 Q 8 100 2 60" />
+                    <path d="M 130 5 Q 116 50 95 100 Q 74 145 50 175 Q 30 200 5 130" />
+                    <path d="M 210 8 Q 186 75 155 150 Q 120 220 82 268 Q 52 305 8 210" />
+                    <path d="M 300 12 Q 265 100 220 200 Q 172 292 118 354 Q 78 395 12 300" />
+                    <path d="M 380 18 Q 335 130 280 250 Q 220 360 155 398" />
+                    {/* Extra inner web threads for density */}
+                    <path d="M 25 1 Q 22 12 18 24 Q 14 34 8 40 Q 3 45 1 25" strokeWidth="0.7" opacity="0.7" />
+                    <path d="M 70 3 Q 62 22 52 46 Q 40 66 26 80 Q 14 90 3 70" strokeWidth="0.7" opacity="0.7" />
+                </g>
+            </svg>
+
+            {/* TOP-RIGHT corner — large dramatic web */}
+            <svg className="web web-tr" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMin meet">
+                <g stroke="rgba(200,200,220,0.11)" strokeWidth="1" fill="none" strokeLinecap="round">
+                    <line x1="400" y1="0" x2="0" y2="20" />
+                    <line x1="400" y1="0" x2="20" y2="80" />
+                    <line x1="400" y1="0" x2="60" y2="150" />
+                    <line x1="400" y1="0" x2="120" y2="220" />
+                    <line x1="400" y1="0" x2="200" y2="290" />
+                    <line x1="400" y1="0" x2="280" y2="350" />
+                    <line x1="400" y1="0" x2="360" y2="400" />
+                    <path d="M 340 2 Q 346 28 358 54 Q 370 76 382 90 Q 392 100 398 60" />
+                    <path d="M 270 5 Q 284 50 305 100 Q 326 145 350 175 Q 370 200 395 130" />
+                    <path d="M 190 8 Q 214 75 245 150 Q 280 220 318 268 Q 348 305 392 210" />
+                    <path d="M 100 12 Q 135 100 180 200 Q 228 292 282 354 Q 322 395 388 300" />
+                    <path d="M 20 18 Q 65 130 120 250 Q 180 360 245 398" />
+                    <path d="M 375 1 Q 378 12 382 24 Q 386 34 392 40 Q 397 45 399 25" strokeWidth="0.7" opacity="0.7" />
+                </g>
+            </svg>
+
+            {/* BOTTOM-LEFT corner web */}
+            <svg className="web web-bl" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
+                <g stroke="rgba(200,200,220,0.08)" strokeWidth="0.9" fill="none" strokeLinecap="round">
+                    <line x1="0" y1="300" x2="300" y2="280" />
+                    <line x1="0" y1="300" x2="280" y2="220" />
+                    <line x1="0" y1="300" x2="220" y2="140" />
+                    <line x1="0" y1="300" x2="140" y2="70" />
+                    <line x1="0" y1="300" x2="60" y2="20" />
+                    <path d="M 50 298 Q 46 280 52 264 Q 30 276 12 295" />
+                    <path d="M 110 290 Q 100 258 110 222 Q 68 248 42 280" />
+                    <path d="M 180 278 Q 162 235 172 185 Q 115 220 80 260" />
+                </g>
+            </svg>
+
+            {/* BOTTOM-RIGHT corner web */}
+            <svg className="web web-br" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax meet">
+                <g stroke="rgba(200,200,220,0.07)" strokeWidth="0.9" fill="none" strokeLinecap="round">
+                    <line x1="300" y1="300" x2="0" y2="280" />
+                    <line x1="300" y1="300" x2="20" y2="220" />
+                    <line x1="300" y1="300" x2="80" y2="140" />
+                    <line x1="300" y1="300" x2="160" y2="70" />
+                    <line x1="300" y1="300" x2="240" y2="20" />
+                    <path d="M 250 298 Q 254 280 248 264 Q 270 276 288 295" />
+                    <path d="M 190 290 Q 200 258 190 222 Q 232 248 258 280" />
+                </g>
+            </svg>
+
+            {/* RIGHT SIDE thin web tendrils */}
+            <svg className="web web-right" viewBox="0 0 60 800" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="rgba(200,200,220,0.06)" strokeWidth="0.7" fill="none">
+                    <line x1="60" y1="0" x2="0" y2="200" />
+                    <line x1="60" y1="100" x2="0" y2="350" />
+                    <line x1="60" y1="250" x2="10" y2="500" />
+                    <line x1="60" y1="400" x2="5" y2="650" />
+                    <path d="M 60 50 Q 40 100 20 150 Q 10 175 0 180" />
+                    <path d="M 60 200 Q 35 280 15 360 Q 5 390 0 400" />
+                    <path d="M 60 450 Q 40 520 20 590 Q 8 620 0 640" />
+                </g>
+            </svg>
+
+            {/* LEFT SIDE thin web tendrils */}
+            <svg className="web web-left" viewBox="0 0 60 800" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="rgba(200,200,220,0.06)" strokeWidth="0.7" fill="none">
+                    <line x1="0" y1="200" x2="60" y2="0" />
+                    <line x1="0" y1="350" x2="60" y2="100" />
+                    <line x1="10" y1="500" x2="60" y2="250" />
+                    <line x1="5" y1="650" x2="60" y2="400" />
+                    <path d="M 0 180 Q 20 175 40 150 Q 50 100 60 50" />
+                    <path d="M 0 400 Q 5 390 15 360 Q 35 280 60 200" />
+                </g>
+            </svg>
+        </div>
+    )
+}
+
+// ====================================================
+// ⚡ Lightning Flash + Overlays
+// ====================================================
+
+function ScreenOverlays() {
+    const [flash, setFlash] = useState(false)
+
+    useEffect(() => {
+        const scheduleFlash = () => {
+            const delay = 8000 + Math.random() * 20000
+            setTimeout(() => {
+                setFlash(true)
+                setTimeout(() => setFlash(false), 120)
+                setTimeout(() => {
+                    setFlash(true)
+                    setTimeout(() => setFlash(false), 80)
+                }, 180)
+                scheduleFlash()
+            }, delay)
+        }
+        scheduleFlash()
+    }, [])
+
+    return (
+        <>
+            <div className="film-grain" />
+            <div className="vignette-overlay" />
+            {flash && <div className="lightning-flash" />}
+        </>
+    )
+}
+
 // ====================================================
 // 💀 Header
 // ====================================================
 
-function Header() {
+function Header({ isMuted, onToggleMute }) {
     return (
         <header className="header">
-            <div className="header-skull">💀</div>
+            <div className="header-top">
+
+                <div className="header-skull">💀</div>
+            </div>
             <h1>Funeral for Stupid Decisions</h1>
             <p>Исповедай своё худшее решение. Мы устроим ему достойные похороны.</p>
         </header>
@@ -100,10 +435,41 @@ function Header() {
 
 function Confessional({ onSubmit, isLoading }) {
     const [mistake, setMistake] = useState('')
+    const [ripple, setRipple] = useState(false)
 
     const handleSubmit = (e) => {
         e.preventDefault()
         if (!mistake.trim() || isLoading) return
+        // Trigger stone button ripple/shake
+        setRipple(true)
+        setTimeout(() => setRipple(false), 400)
+        // Play burial sound via Web Audio API
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)()
+            // Deep thud
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.connect(gain)
+            gain.connect(ctx.destination)
+            osc.frequency.setValueAtTime(60, ctx.currentTime)
+            osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.5)
+            gain.gain.setValueAtTime(0.3, ctx.currentTime)
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+            osc.start(ctx.currentTime)
+            osc.stop(ctx.currentTime + 0.5)
+            // Bell tone
+            const osc2 = ctx.createOscillator()
+            const gain2 = ctx.createGain()
+            osc2.type = 'sine'
+            osc2.connect(gain2)
+            gain2.connect(ctx.destination)
+            osc2.frequency.setValueAtTime(440, ctx.currentTime + 0.1)
+            osc2.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 1.2)
+            gain2.gain.setValueAtTime(0.12, ctx.currentTime + 0.1)
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2)
+            osc2.start(ctx.currentTime + 0.1)
+            osc2.stop(ctx.currentTime + 1.2)
+        } catch (e) { /* no audio support, no problem */ }
         onSubmit(mistake.trim())
         setMistake('')
     }
@@ -135,9 +501,14 @@ function Confessional({ onSubmit, isLoading }) {
                         )}
                     </span>
                 </div>
-                <button type="submit" className="bury-btn" disabled={!mistake.trim() || isLoading}>
-                    <span className="btn-icon">⚰️</span>
-                    Похоронить это решение
+                <button
+                    type="submit"
+                    className={`bury-btn${ripple ? ' bury-btn--strike' : ''}`}
+                    disabled={!mistake.trim() || isLoading}
+                >
+                    <span className="btn-skull">💀</span>
+                    <span className="btn-text">Похоронить это решение</span>
+                    <span className="btn-skull">💀</span>
                 </button>
             </form>
         </motion.div>
@@ -500,11 +871,15 @@ function Gravestone({ data, onBuryAnother }) {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.2 }}
                 >
-                    <button className="action-btn secondary" onClick={() => setShowScroll(true)}>
-                        📜 Читать панихиду
+                    <button className="action-btn" onClick={() => setShowScroll(true)}>
+                        <span className="btn-skull">📜</span>
+                        <span className="btn-text">Читать панихиду</span>
+                        <span className="btn-skull">📜</span>
                     </button>
-                    <button className="action-btn primary" onClick={onBuryAnother}>
-                        ⚰️ Похоронить ещё
+                    <button className="action-btn" onClick={onBuryAnother}>
+                        <span className="btn-skull">⚰️</span>
+                        <span className="btn-text">Похоронить ещё</span>
+                        <span className="btn-skull">⚰️</span>
                     </button>
                 </motion.div>
             </motion.div>
@@ -569,7 +944,9 @@ export default function App() {
     const [view, setView] = useState('confess') // 'confess' | 'loading' | 'funeral'
     const [currentGrave, setCurrentGrave] = useState(null)
     const [graves, setGraves] = useState([])
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [isMuted, setIsMuted] = useState(false)
 
     const loadGraves = useCallback(async () => {
         try {
@@ -585,6 +962,7 @@ export default function App() {
     }, [loadGraves])
 
     const handleBury = async (mistake) => {
+        setLoading(true)
         setError(null)
         setView('loading')
 
@@ -605,69 +983,57 @@ export default function App() {
     const handleDelete = async (id) => {
         try {
             await apiFetch(`/api/graves/${id}`, { method: 'DELETE' })
-            // Soft-deleted: remove from local state (server keeps it with is_deleted=true)
             setGraves(prev => prev.filter(g => g.id !== id))
-            if (currentGrave && currentGrave.id === id) {
-                setCurrentGrave(null)
-                setView('confess')
-            }
         } catch (err) {
-            console.error('Failed to delete:', err)
+            console.error('Delete error:', err)
         }
     }
 
-    const handleBuryAnother = () => {
-        setCurrentGrave(null)
-        setView('confess')
-    }
-
-    const handleSelectGrave = (grave) => {
-        setCurrentGrave(grave)
-        setView('funeral')
-    }
-
     return (
-        <>
+        <div className="app-container">
+            <AmbientHorror isMuted={isMuted} />
+            <ScreenOverlays />
+            <SpiderWebs />
             <Particles />
-            <div className="app-container">
-                <Header />
 
-                {error && (
-                    <motion.div
-                        className="error-box"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
-                        💀 {error}
-                    </motion.div>
-                )}
+            <main className="main-content">
+                <Header isMuted={isMuted} onToggleMute={() => setIsMuted(!isMuted)} />
 
                 <AnimatePresence mode="wait">
                     {view === 'confess' && (
-                        <Confessional key="confess" onSubmit={handleBury} isLoading={false} />
+                        <Confessional key="confess" onSubmit={handleBury} isLoading={loading} />
                     )}
-                    {view === 'loading' && <DiggingScene key="loading" />}
+                    {view === 'loading' && (
+                        <DiggingScene key="loading" />
+                    )}
                     {view === 'funeral' && currentGrave && (
                         <Gravestone
                             key="funeral"
                             data={currentGrave}
-                            onBuryAnother={handleBuryAnother}
+                            onBuryAnother={() => setView('confess')}
                         />
                     )}
                 </AnimatePresence>
 
-                {view !== 'loading' && (
+                {error && <div className="error-box">{error}</div>}
+
+                {view === 'confess' && (
                     <Cemetery
                         graves={graves}
-                        onSelect={handleSelectGrave}
+                        onSelect={(g) => {
+                            setCurrentGrave(g)
+                            setView('funeral')
+                        }}
                         onDelete={handleDelete}
                     />
                 )}
+            </main>
 
-                <footer className="app-footer">
-                    <p>💀 Funeral for Stupid Decisions © {new Date().getFullYear()}</p>
-                </footer>
-            </div>
-        </>
+            <footer className="footer">
+                <p>
+                    <span className="footer-skull">💀</span> Funeral for Stupid Decisions &copy; 2026
+                </p>
+            </footer>
+        </div>
     )
 }

@@ -20,7 +20,7 @@ try {
     if (process.env.GEMINI_API_KEY) {
         const { GoogleGenerativeAI } = await import('@google/generative-ai')
         genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        const modelName = "gemini-2.5-flash-lite"
+        const modelName = "gemini-2.0-flash-lite"
         geminiModel = genAI.getGenerativeModel({ model: modelName })
         console.log(`✅ Gemini connected (${modelName}) — AI-powered burials enabled`)
     } else {
@@ -168,14 +168,45 @@ async function generateAIContent(mistake, lang) {
 
     const isRu = lang === 'ru'
     const systemInstruction = isRu
-        ? `Ты — саркастичный, драматичный и готический ведущий "Кладбища Глупых Решений". Ты проводишь похоронные церемонии для плоих идей и ошибок. Твой стиль: черный юмор, сарказм, трагизм.`
-        : `You are a sarcastic, dramatic, gothic officiant for the "Funeral for Stupid Decisions". You conduct ceremonies for bad ideas and mistakes. Style: dark humor, sarcasm, tragic.`
+        ? `Ты — мрачный, саркастичный ведущий "Кладбища Глупых Решений". Правила:
+1. ВСЕГДА анализируй КОНКРЕТНУЮ ошибку пользователя — не пиши общие фразы.
+2. Найди НАСТОЯЩИЙ человеческий порок за ошибкой (лень, жадность, самоуверенность, наивность и т.д.).
+3. Будь драматичным, но ПОНЯТНЫМ — без абстрактных метафор.
+4. Каждое предложение должно бить в цель — остро, умно, с чёрным юмором.
+5. Пиши так, чтобы человек одновременно смеялся и чувствовал укол правды.`
+        : `You are a dark, sarcastic officiant at the "Funeral for Stupid Decisions". Rules:
+1. ALWAYS analyze the USER'S SPECIFIC mistake — never write generic phrases.
+2. Identify the REAL human flaw behind the mistake (laziness, greed, overconfidence, naivety, etc.).
+3. Be dramatic but CLEAR — no abstract metaphors that are hard to understand.
+4. Every sentence should hit where it hurts — sharp, intelligent, darkly funny.
+5. Write so the person laughs and feels the sting of truth at the same time.`
 
     const prompt = isRu
-        ? `${systemInstruction}\n\nПроанализируй эту ошибку: "${mistake}". На основе этого напиши эпитафию, панихиду и причину смерти.\n\nВерни JSON строго в формате:\n{\n  "epitaph": "короткая саркастичная строка для надгробия",\n  "eulogy": "траурная речь (4-6 предложений), драматичная и умная",\n  "cause": "короткая ироничная причина смерти (3-8 слов)"\n}`
-        : `${systemInstruction}\n\nAnalyze this mistake: "${mistake}". Based on this, write an epitaph, a eulogy, and a cause of death.\n\nReturn JSON strictly in format:\n{\n  "epitaph": "short sarcastic line for the tombstone",\n  "eulogy": "funeral speech (4-6 sentences), dramatic and intelligent",\n  "cause": "short ironic cause of death (3-8 words)"\n}`
+        ? `${systemInstruction}
+
+Ошибка пользователя: "${mistake}"
+
+Проанализируй эту КОНКРЕТНУЮ ошибку. Какой человеческий порок за ней стоит? Напиши:
+1. Эпитафию — одну короткую убийственно-точную фразу для надгробия (макс. 100 символов)
+2. Панихиду — траурную речь в 4-6 предложений. Каждое предложение должно быть про ЭТУ конкретную ошибку.
+3. Причину смерти — ироничный "диагноз" из 3-6 слов.
+
+Верни ТОЛЬКО JSON:
+{"epitaph": "...", "eulogy": "...", "cause": "..."}`
+        : `${systemInstruction}
+
+User's mistake: "${mistake}"
+
+Analyze this SPECIFIC mistake. What human flaw does it reveal? Write:
+1. Epitaph — one short, devastatingly accurate line for the tombstone (max 100 chars)
+2. Eulogy — funeral speech in 4-6 sentences. Every sentence must be about THIS specific mistake.
+3. Cause of death — an ironic "diagnosis" in 3-6 words.
+
+Return ONLY JSON:
+{"epitaph": "...", "eulogy": "...", "cause": "..."}`
 
     try {
+        console.log(`🤖 AI Request: mistake="${mistake}" lang=${lang}`)
         const result = await geminiModel.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
@@ -185,23 +216,29 @@ async function generateAIContent(mistake, lang) {
         })
         const response = await result.response
         let text = response.text()
+        console.log(`🤖 AI Raw Response:`, text)
 
         // Robust JSON extraction
         const jsonMatch = text.match(/\{[\s\S]*\}/)
         if (jsonMatch) text = jsonMatch[0]
 
         const parsed = JSON.parse(text)
-        if (parsed.epitaph && parsed.eulogy && (parsed.cause || parsed.causeOfDeath)) {
+        console.log(`🤖 AI Parsed Data:`, parsed)
+
+        // Accept 'cause' or 'causeOfDeath'
+        const cause = parsed.cause || parsed.causeOfDeath || parsed.cause_of_death
+
+        if (parsed.epitaph && parsed.eulogy && cause) {
             return {
                 epitaph: parsed.epitaph,
                 eulogy: parsed.eulogy,
-                causeOfDeath: parsed.cause || parsed.causeOfDeath
+                causeOfDeath: cause
             }
         }
-        console.warn('AI returned partial data:', text)
+        console.warn('⚠️ AI returned partial data:', text)
         return null
     } catch (e) {
-        console.error('Gemini generation error details:', e)
+        console.error('❌ Gemini generation error:', e.message)
         return null
     }
 }
