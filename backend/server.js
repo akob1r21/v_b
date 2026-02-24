@@ -18,7 +18,11 @@ let groq = null
 try {
     if (process.env.GROQ_API_KEY) {
         const { default: Groq } = await import('groq-sdk')
-        groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+        groq = new Groq({
+            apiKey: process.env.GROQ_API_KEY,
+            maxRetries: 3,
+            timeout: 20000 // 20 seconds
+        })
         console.log(`✅ Groq connected — AI-powered burials enabled`)
     } else {
         console.log('⚠️  No GROQ_API_KEY found — using static templates')
@@ -206,9 +210,9 @@ Return ONLY JSON:
         console.log(`🤖 AI Request: mistake="${mistake}" lang=${lang}`)
         const completion = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.9,
-            max_tokens: 600,
+            model: 'llama-3.1-8b-instant',
+            temperature: 0.8,
+            max_tokens: 500,
             response_format: { type: 'json_object' }
         })
 
