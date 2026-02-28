@@ -189,7 +189,7 @@ async function generateAIContent(mistake, lang) {
 
 Проанализируй эту КОНКРЕТНУЮ ошибку. Какой человеческий порок за ней стоит? Напиши:
 1. Эпитафию — одну короткую убийственно-точную фразу для надгробия (макс. 100 символов)
-2. Панихиду — 1-2 коротких, простых и понятных предложения. Опиши суть ошибки чётко и ясно.
+2. Панихиду — траурную речь в 4-6 предложений. Каждое предложение должно быть про ЭТУ конкретную ошибку.
 3. Причину смерти — ироничный "диагноз" из 3-6 слов.
 
 Верни ТОЛЬКО JSON:
@@ -200,7 +200,7 @@ User's mistake: "${mistake}"
 
 Analyze this SPECIFIC mistake. What human flaw does it reveal? Write:
 1. Epitaph — one short, devastatingly accurate line for the tombstone (max 100 chars)
-2. Eulogy — 1-2 short, simple, and clear sentences. Describe the core issue easily so anyone can understand.
+2. Eulogy — funeral speech in 4-6 sentences. Every sentence must be about THIS specific mistake.
 3. Cause of death — an ironic "diagnosis" in 3-6 words.
 
 Return ONLY JSON:

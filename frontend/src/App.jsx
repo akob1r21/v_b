@@ -17,7 +17,7 @@ function getSessionId() {
 const SESSION_ID = getSessionId()
 
 // frontend/src/App.jsx
-const API_URL = 'http://localhost:3000'
+const API_URL = 'http://188.212.124.117:3000'
 
 // --- FRONTEND-ONLY FALLBACK DATA ---
 const EPITAPHS = {
@@ -617,8 +617,7 @@ function Confessional({ onSubmit, isLoading }) {
                 </label>
                 <textarea
                     className="confessional-textarea"
-                    placeholder="Burying the ghost of an unspoken feeling, left to wither on my tongue because silence felt safer..."
-                    value={mistake}
+                    placeholder="I spent all time building this… for absolutely u 😌"                    value={mistake}
                     onChange={(e) => setMistake(e.target.value)}
                     maxLength={500}
                     disabled={isLoading}
